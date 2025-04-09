@@ -1,24 +1,15 @@
-// src/app/mall/[mallId]/page.tsx
-
 import { fetchMalls } from "@/lib/fetchMalls";
 import EateriesFilter from "@/components/EateriesFilter";
+import { PageProps } from "next";
 
-type Props = {
-  params: {
-    mallId: string;
-  };
-};
+export default async function MallPage({ params }: PageProps) {
+  const { mallId } = params;
 
-export default async function MallPage({ params }: Props) {
   const malls = await fetchMalls();
-  const mall = malls.find((m) => m.id === params.mallId);
+  const mall = malls.find((m) => m.id === mallId);
 
   if (!mall) {
-    return (
-      <div className="p-4 text-red-500">
-        Mall not found. Please go back and try again.
-      </div>
-    );
+    return <div className="p-4 text-red-500">Mall not found.</div>;
   }
 
   return (
