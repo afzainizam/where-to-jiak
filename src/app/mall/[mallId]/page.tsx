@@ -2,27 +2,17 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import { fetchMalls } from "@/lib/fetchMalls";
 import EateriesFilter from "@/components/EateriesFilter";
 import Link from "next/link";
+import { Mall } from "@/types"; // if defined
 
 interface MallPageProps {
-  params: Promise<{
+  params: {
     mallId: string;
-  }>;
+  };
 }
-
-interface Mall {
-  id: string;
-  name: string;
-  location: string;
-  stars: number;
-  total_reviews: number;
-  google_maps_url?: string; // optional if not always provided
-}
-
 
 export default async function MallPage({ params }: MallPageProps) {
-  const { mallId } = await params;
-  // Ensure you type the returned malls. This might also be done in fetchMalls.
-  const malls = await fetchMalls();
+  const { mallId } = params;
+  const malls: Mall[] = await fetchMalls();
   const mall = malls.find((m) => m.id === mallId);
 
   if (!mall) {
