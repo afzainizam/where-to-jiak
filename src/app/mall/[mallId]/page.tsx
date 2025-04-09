@@ -1,18 +1,15 @@
-import { FaMapMarkerAlt } from "react-icons/fa";
 import { fetchMalls } from "@/lib/fetchMalls";
 import EateriesFilter from "@/components/EateriesFilter";
 import Link from "next/link";
-import { Mall } from "@/types"; // if defined
+import { FaMapMarkerAlt } from "react-icons/fa";
 
-interface MallPageProps {
-  params: {
-    mallId: string;
-  };
-}
-
-export default async function MallPage({ params }: MallPageProps) {
+export default async function MallPage({
+  params,
+}: {
+  params: { mallId: string };
+}) {
   const { mallId } = params;
-  const malls: Mall[] = await fetchMalls();
+  const malls = await fetchMalls();
   const mall = malls.find((m) => m.id === mallId);
 
   if (!mall) {
