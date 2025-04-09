@@ -2,27 +2,26 @@ import { fetchMalls } from "@/lib/fetchMalls";
 import EateriesFilter from "@/components/EateriesFilter";
 import Link from "next/link";
 
-type Props = {
-  params: {
-    mallId: string;
-  };
-};
-
-export default async function MallPage({ params }: Props) {
+export default async function MallPage({ params }: { params: { mallId: string } }) {
   const malls = await fetchMalls();
   const mall = malls.find((m) => m.id === params.mallId);
 
   if (!mall) {
     return (
       <div className="p-4 text-red-500">
-        Mall not found. <Link href="/" className="text-blue-400 underline">Go back</Link>
+        Mall not found.{" "}
+        <Link href="/" className="text-blue-400 underline">
+          Go back
+        </Link>
       </div>
     );
   }
 
   return (
     <div className="p-6 max-w-6xl mx-auto text-white">
-      <Link href="/" className="text-blue-400 underline mb-4 inline-block">← Back</Link>
+      <Link href="/" className="text-blue-400 underline mb-4 inline-block">
+        ← Back
+      </Link>
 
       <h1 className="text-3xl font-bold mb-1">{mall.name}</h1>
       <p className="text-gray-300">{mall.location}</p>
