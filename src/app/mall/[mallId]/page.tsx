@@ -3,13 +3,13 @@
 import { fetchMalls } from "@/lib/fetchMalls";
 import EateriesFilter from "@/components/EateriesFilter";
 
-type MallPageProps = {
+type Props = {
   params: {
     mallId: string;
   };
 };
 
-export default async function MallPage({ params }: MallPageProps) {
+export default async function MallPage({ params }: Props) {
   const malls = await fetchMalls();
   const mall = malls.find((m) => m.id === params.mallId);
 
