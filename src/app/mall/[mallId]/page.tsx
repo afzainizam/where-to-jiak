@@ -3,9 +3,7 @@ import EateriesFilter from "@/components/EateriesFilter";
 import Link from "next/link";
 
 interface MallPageProps {
-  params: {
-    mallId: string;
-  };
+  params: { mallId: string };
 }
 
 export default async function MallPage({ params }: MallPageProps) {
