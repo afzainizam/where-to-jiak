@@ -24,3 +24,117 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* General Styling */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #141414;
+  color: #fff;
+}
+.container {
+  width: 90%;
+  margin: 0 auto;
+}
+
+/* Hero / Landing Page */
+header.hero {
+  background: url('/images/landing-bg.jpg') no-repeat center center/cover;
+  height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+header.hero h1 {
+  font-size: 4em;
+  margin-bottom: 0.5em;
+}
+header.hero p {
+  font-size: 1.5em;
+  margin-bottom: 1em;
+}
+header.hero input {
+  padding: 0.5em;
+  width: 300px;
+  font-size: 1em;
+  border: none;
+  border-radius: 5px;
+}
+
+/* Feature Section */
+.feature {
+  padding: 2em 0;
+  background: linear-gradient(45deg, #ff416c, #ff4b2b);
+}
+.feature h2 {
+  text-align: center;
+}
+.feature #featuredMall {
+  text-align: center;
+  margin: 1em 0;
+  font-size: 1.2em;
+}
+.map-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1em;
+}
+
+/* Mall List Page */
+header input, header select {
+  padding: 0.5em;
+  margin: 0.5em;
+  font-size: 1em;
+  border-radius: 5px;
+  border: none;
+}
+.mall-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.mall-card {
+  background-color: #222;
+  margin: 1em;
+  padding: 1em;
+  border-radius: 8px;
+  width: 250px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+.mall-card:hover {
+  transform: scale(1.05);
+}
+.mall-card img {
+  width: 100px;
+  height: auto;
+  margin-bottom: 0.5em;
+}
+
+/* Detail Pages */
+.mall-detail, .eatery-detail {
+  background-color: #222;
+  padding: 2em;
+  border-radius: 8px;
+  margin: 2em 0;
+}
+.mall-detail img, .eatery-detail img {
+  max-width: 150px;
+}
+.mall-rating, .eatery-rating {
+  margin: 1em 0;
+  font-size: 1.2em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  header.hero h1 {
+    font-size: 3em;
+  }
+  .mall-list {
+    flex-direction: column;
+    align-items: center;
+  }
+}
