@@ -1,15 +1,11 @@
 import { fetchMalls } from "@/lib/fetchMalls";
 import EateriesFilter from "@/components/EateriesFilter";
 
-interface Props {
-  params: {
-    mallId: string;
-  };
-}
+export default async function MallPage({ params }: any) {
+  const mallId = params.mallId;
 
-export default async function MallPage({ params }: Props) {
   const malls = await fetchMalls();
-  const mall = malls.find((m) => m.id === params.mallId);
+  const mall = malls.find((m) => m.id === mallId);
 
   if (!mall) {
     return <div className="p-4 text-red-500">Mall not found.</div>;
