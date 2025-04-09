@@ -22,7 +22,7 @@ interface Mall {
 export default async function MallPage({ params }: MallPageProps) {
   const { mallId } = await params;
   // Ensure you type the returned malls. This might also be done in fetchMalls.
-  const malls: Mall[] = await fetchMalls();
+  const malls = await fetchMalls();
   const mall = malls.find((m) => m.id === mallId);
 
   if (!mall) {
