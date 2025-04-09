@@ -7,6 +7,8 @@ import { useParams } from "next/navigation";
 import { GiKnifeFork } from "react-icons/gi";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { FaStar, FaMapMarkerAlt, FaGlobe } from "react-icons/fa"; // Make sure FaGlobe is imported
+import type { Mall, Eatery } from "@/types/mall";
+
 
 function isOpenNow(openingHoursDetails: any): boolean {
   if (!openingHoursDetails || !openingHoursDetails.periods) return false;

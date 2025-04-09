@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import MallCard from "@/components/MallCard";
 import SearchBar from "@/components/SearchBar";
 import MallSquaresRow from "@/components/MallSquaresRow";
-import { Mall, Eatery } from "@/types";
+import type { Mall, Eatery } from "@/types/mall";
 
 
 interface Props {
