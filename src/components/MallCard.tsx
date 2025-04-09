@@ -40,23 +40,36 @@ export default function MallCard({ mall, expandedEatery }: { mall: any; expanded
       <h1 className="text-center text-3xl font-bold mb-4">Jiak Spot of the Day</h1>
       <div className="w-full bg-gray-900 text-white rounded-xl shadow-lg mb-8 border border-gray-700">
         {/* Top Half: Google Map with rounded top corners */}
-        <div className="rounded-t-xl overflow-hidden w-full h-64 relative">
-          {embedUrl ? (
-            <iframe
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              style={{ border: 0 }}
-              src={embedUrl}
-              allowFullScreen
-              loading="lazy"
-            ></iframe>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <p>No map available</p>
-            </div>
-          )}
-        </div>
+          <div className="rounded-t-xl overflow-hidden w-full h-64 relative">
+            {mall.coordinates && mall.coordinates.lat && mall.coordinates.lng ? (
+              // Use mall coordinates if available
+              <iframe
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                style={{ border: 0 }}
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=place_id:${mall.id}`}
+                allowFullScreen
+                loading="lazy"
+              ></iframe>
+            ) : mall.eateries && mall.eateries[0]?.location?.lat && mall.eateries[0]?.location?.lng ? (
+              // Fallback: Use first eatery's coordinates if mall coordinates are missing
+              <iframe
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                style={{ border: 0 }}
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0]?.location?.lat},${mall.eateries[0]?.location?.lng}`}
+                allowFullScreen
+                loading="lazy"
+              ></iframe>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <p>No map available</p>
+              </div>
+            )}
+          </div>
+
 
         {/* Bottom Half: Mall Details */}
         <div className="p-4">
