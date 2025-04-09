@@ -1,27 +1,25 @@
 import { fetchMalls } from "@/lib/fetchMalls";
 import EateriesFilter from "@/components/EateriesFilter";
 import Link from "next/link";
-import { FaMapMarkerAlt } from "react-icons/fa";
 
-export default async function MallPage({
-  params,
-}: {
-  params: { mallId: string };
-}) {
-  const { mallId } = params;
+interface MallPageProps {
+  params: {
+    mallId: string;
+  };
+}
+
+export default async function MallPage({ params }: MallPageProps) {
   const malls = await fetchMalls();
-  const mall = malls.find((m) => m.id === mallId);
+  const mall = malls.find((m) => m.id === params.mallId);
 
   if (!mall) {
-    return <div className="p-4 text-red-500">Mall not found</div>;
+    return <div className="text-red-500 p-4">Mall not found</div>;
   }
 
   return (
-    <div className="px-6 py-4">
-      <Link href="/">
-        <button className="mb-4 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">
-          ← Back
-        </button>
+    <div className="p-4">
+      <Link href="/" className="text-blue-400 underline mb-4 inline-block">
+        ← Back to Search
       </Link>
 
       <h1 className="text-3xl font-bold text-white mb-1">{mall.name}</h1>
@@ -29,9 +27,9 @@ export default async function MallPage({
       <p className="text-yellow-400">
         ⭐ {mall.stars} ({mall.total_reviews} reviews)
       </p>
+
       {mall.google_maps_url && (
-        <p className="text-blue-300 mt-1 flex items-center gap-1">
-          <FaMapMarkerAlt />
+        <p className="text-blue-300 mt-1">
           <a
             href={mall.google_maps_url}
             target="_blank"
