@@ -52,49 +52,55 @@ const ClientMallsPage = ({ malls }: Props) => {
         );
       }
 
-      if (region === "Nearby") {
-        // Use geolocation to get the user's current position.
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const { latitude, longitude } = position.coords;
-              // Filter only malls with valid coordinates.
-              const mallsWithDistance = updated.filter(
-                (mall) =>
-                  mall.coordinates &&
-                  typeof mall.coordinates.lat === "number" &&
-                  typeof mall.coordinates.lng === "number"
-              ).map((mall) => {
-                const dist = getDistance(
-                  latitude,
-                  longitude,
-                  mall.coordinates.lat,
-                  mall.coordinates.lng
-                );
-                return { ...mall, distance: dist };
-              });
-              // Sort malls by distance and update filteredMalls with the nearest one.
-              mallsWithDistance.sort((a, b) => a.distance - b.distance);
-              setFilteredMalls(mallsWithDistance.slice(0, 1));
-            },
-            (error) => {
-              console.error("Geolocation error:", error);
-              // Fallback: just use the updated list without nearby filtering.
-              setFilteredMalls([]);
-            }
-          );
+        if (region === "Nearby") {
+          // Use geolocation to get the user's current position.
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const { latitude, longitude } = position.coords;
+
+                // Filter only malls with valid coordinates.
+                const mallsWithDistance = updated
+                  .filter(
+                    (mall) =>
+                      mall.coordinates &&
+                      typeof mall.coordinates.lat === "number" &&
+                      typeof mall.coordinates.lng === "number"
+                  )
+                  .map((mall) => {
+                    const dist = getDistance(
+                      latitude,
+                      longitude,
+                      mall.coordinates.lat,
+                      mall.coordinates.lng
+                    );
+                    return { ...mall, distance: dist };
+                  });
+
+                // Sort malls by distance and update filteredMalls with the nearest one.
+                mallsWithDistance.sort((a, b) => a.distance - b.distance);
+                setFilteredMalls(mallsWithDistance.slice(0, 1));
+              },
+              (error) => {
+                console.error("Geolocation error:", error);
+                // Fallback: just use the updated list without nearby filtering.
+                setFilteredMalls([]);
+              }
+            );
+          } else {
+            console.warn("Geolocation is not supported by this browser.");
+            setFilteredMalls([]);
+          }
         } else {
-          console.warn("Geolocation is not supported by this browser.");
-          setFilteredMalls([]);
+          // If region is not 'Nearby' and not 'All', filter by region.
+          if (region !== "All") {
+            updated = updated.filter((mall) => mall.region === region);
+          }
+
+          // Randomize and take one (or adjust as desired).
+          setFilteredMalls(updated.sort(() => 0.5 - Math.random()).slice(0, 1));
         }
-      } else {
-        // If region is not 'Nearby' and not 'All', filter by region.
-        if (region !== "All") {
-          updated = updated.filter((mall) => mall.region === region);
-        }
-        // Randomize and take one (or adjust as desired).
-        setFilteredMalls(updated.sort(() => 0.5 - Math.random()).slice(0, 1));
-      }
+
     }, [region, searchTerm, malls]);
 
 
