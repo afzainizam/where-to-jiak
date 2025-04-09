@@ -13,7 +13,7 @@ export default async function MallPage({ params }: any) {
 
   return (
     <div className="p-4">
-      <EateriesFilter mall={mall} />
+          <EateriesFilter />
     </div>
   );
 }
