@@ -1,7 +1,7 @@
 import { fetchMalls } from "@/lib/fetchMalls";
 import Link from "next/link";
+import { PageProps } from 'next/types'; // Import PageProps
 
-// Define the expected structure of `params`
 export default async function MallPage({
   params,
 }: {
@@ -9,7 +9,6 @@ export default async function MallPage({
 }) {
   const { mallId } = params;
 
-  // Make sure your fetchMalls() returns full mall objects
   const malls = await fetchMalls();
   const mall = malls.find((m) => m.id === mallId);
 
@@ -21,15 +20,16 @@ export default async function MallPage({
     <div className="p-6">
       <Link href="/">
         <button className="mb-4 text-sm text-blue-400 underline hover:text-blue-200">
-          ← Back to all malls
+           Back to all malls
         </button>
       </Link>
 
       <h1 className="text-3xl font-bold text-white mb-1">{mall.name}</h1>
       <p className="text-gray-300">{mall.location}</p>
       <p className="text-yellow-400">
-        ⭐ {mall.stars} ({mall.total_reviews} reviews)
+         {mall.stars} ({mall.total_reviews} reviews)
       </p>
+   
       {mall.google_maps_url && (
         <p className="text-blue-300 mt-1">
           <a
