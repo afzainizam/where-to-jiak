@@ -9,7 +9,8 @@ function getEmbedUrl(googleMapsUrl: string): string {
   if (match && match[1]) {
     const placeId = match[1];
     // Replace YOUR_API_KEY with your actual Maps Embed API key.
-    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyAplspJC1lhigOb_EsRydELY2CipZrszeE&q=place_id:${placeId}`;
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+      return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=place_id:${placeId}`;
   }
   return "";
 }
