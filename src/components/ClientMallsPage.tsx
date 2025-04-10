@@ -71,8 +71,8 @@ const ClientMallsPage = ({ malls }: Props) => {
                     const dist = getDistance(
                       latitude,
                       longitude,
-                      mall.coordinates.lat,
-                      mall.coordinates.lng
+                      mall.coordinates!.lat,  // non-null assertion added here
+                      mall.coordinates!.lng   // and here
                     );
                     return { ...mall, distance: dist };
                   });
@@ -96,10 +96,10 @@ const ClientMallsPage = ({ malls }: Props) => {
           if (region !== "All") {
             updated = updated.filter((mall) => mall.region === region);
           }
-
           // Randomize and take one (or adjust as desired).
           setFilteredMalls(updated.sort(() => 0.5 - Math.random()).slice(0, 1));
         }
+
 
     }, [region, searchTerm, malls]);
 
