@@ -27,6 +27,7 @@ export interface Eatery {
   logo_url?: string;
   rating?: number;
   total_reviews?: number;
+  region: string;
   location?: Location;  // This location is required for eateries
   summary?: {
     one_liner: string;
