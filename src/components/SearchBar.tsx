@@ -1,16 +1,28 @@
 "use client";
 import { useState, useEffect } from "react";
+import type { Mall, Eatery } from "@/types/mall";
 
-export default function SearchBar({ malls, onSelect }) {
+interface SearchBarProps {
+  malls: Mall[];
+  onSearch: (term: string) => void;
+  onSelect: (item: Mall | Eatery) => void;
+}
+
+
+export default function SearchBar({ malls, onSearch, onSelect }: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+    
 
   useEffect(() => {
     if (!searchTerm) {
       setSuggestions([]);
       return;
     }
+      
+    
 
     const lower = searchTerm.toLowerCase();
     const matches: any[] = [];
