@@ -151,21 +151,20 @@ export default function MallCard({ mall, expandedEatery, highlightEatery }: Mall
                         </span>
                       )}
                     </p>
-                    {featuredEatery.summary?.most_mentioned && (
-                      <div className="flex flex-wrap gap-1 mt-1 text-xs text-yellow-100">
-                        {featuredEatery.summary.most_mentioned
-                          .split(",")
-                          .slice(0, 2)
-                          .map((dish, index) => (
-                            <span
-                              key={index}
-                              className="bg-yellow-700 rounded-full px-2 py-0.5"
-                            >
-                              👍 {dish.trim()}
-                            </span>
-                          ))}
-                      </div>
-                    )}
+                              {featuredEatery.summary?.most_mentioned && (
+                                <div className="flex flex-wrap gap-1 mt-1 text-xs text-yellow-100">
+                                  {(
+                                    (featuredEatery.summary.most_mentioned as string)
+                                      .split(",")
+                                      .slice(0, 2) as string[]
+                                  ).map((dish: string, index: number) => (
+                                    <span key={index} className="bg-yellow-700 rounded-full px-2 py-0.5">
+                                      👍 {dish.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
                   </div>
                 </div>
                 {/* Summary Section */}

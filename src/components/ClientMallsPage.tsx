@@ -5,6 +5,8 @@ import MallCard from "@/components/MallCard";
 import SearchBar from "@/components/SearchBar";
 import MallSquaresRow from "@/components/MallSquaresRow";
 import type { Mall, Eatery } from "@/types/mall";
+import type { Suggestion } from "@/components/SearchBar";
+
 
 
 interface Props {
@@ -130,16 +132,16 @@ const ClientMallsPage = ({ malls }: Props) => {
     setSelectedEatery(null); // Clear selected eatery when changing region
   };
 
-  const handleSelectSuggestion = (item: Mall | Eatery) => {
-    if ("eateries" in item) {
-      setSearchTerm(item.name);
-      setSelectedEatery(null);
-    } else {
-      setSearchTerm(item.name);
-      setSelectedEatery({ mallId: item.mall_id, eateryId: item.id });
+    const handleSelectSuggestion = (item: Suggestion) => {
+      if (item.type === "mall") {
+        setSearchTerm(item.name);
+        setSelectedEatery(null);
+      } else {
+        setSearchTerm(item.name);
+        setSelectedEatery({ mallId: item.mallId!, eateryId: item.id });
+      }
+    };
 
-    }
-  };
 
   return (
     <div>

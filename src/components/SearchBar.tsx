@@ -2,30 +2,35 @@
 import { useState, useEffect } from "react";
 import type { Mall, Eatery } from "@/types/mall";
 
-interface SearchBarProps {
-  malls: Mall[];
-  onSearch: (term: string) => void;
-  onSelect: (item: Mall | Eatery) => void;
+
+export interface Suggestion {
+  type: "mall" | "eatery";
+  name: string;
+  id: string;
+  mall?: string;
+  mallId?: string;
 }
 
 
+interface SearchBarProps {
+  malls: Mall[];
+  onSearch: (term: string) => void;
+  onSelect: (item: Suggestion) => void; // updated type here
+}
+
 export default function SearchBar({ malls, onSearch, onSelect }: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-    
 
   useEffect(() => {
     if (!searchTerm) {
       setSuggestions([]);
       return;
     }
-      
-    
 
     const lower = searchTerm.toLowerCase();
-    const matches: any[] = [];
+    const matches: Suggestion[] = [];
 
     malls.forEach((mall) => {
       if (mall.name.toLowerCase().includes(lower)) {
@@ -47,12 +52,11 @@ export default function SearchBar({ malls, onSearch, onSelect }: SearchBarProps)
     setSuggestions(matches);
   }, [searchTerm, malls]);
 
-  const onSelectSuggestion = (suggestion: any) => {
-    // Clear search input and hide suggestions
+  const onSelectSuggestion = (suggestion: Suggestion) => {
     setSearchTerm("");
     setShowSuggestions(false);
     setSuggestions([]);
-    onSelect(suggestion);
+    onSelect(suggestion); // now passes a Suggestion object
   };
 
   return (

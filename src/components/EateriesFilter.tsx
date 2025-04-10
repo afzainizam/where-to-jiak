@@ -304,22 +304,16 @@ const EateriesFilter = () => {
                       </span>
                     )}
                   </p>
-                  {eatery.summary?.most_mentioned && (
-                    <div className="flex flex-wrap gap-1 mt-1 text-xs text-yellow-100">
-                      {(eatery.summary.most_mentioned as string)
-                        .split(",")
-                        .slice(0, 2)
-                        .map((dish: string, index: number) => (
-                          <span
-                            key={index}
-                            className="bg-yellow-700 rounded-full px-2 py-0.5"
-                          >
-                            👍{dish.trim()}
-                          </span>
-                        ))}
-                    </div>
-                  )}
-                </div>
+                  {(((eatery.summary?.most_mentioned || "") as string)
+                    .split(",")
+                    .slice(0, 2)
+                    .map((dish: string, index: number) => (
+                      <span key={index} className="bg-yellow-700 rounded-full px-2 py-0.5">
+                        👍{dish.trim()}
+                      </span>
+                    )))}
+
+                  </div>
 
                 {/* Bookmark Button */}
                 <button
