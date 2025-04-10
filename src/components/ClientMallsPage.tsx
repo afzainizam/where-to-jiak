@@ -136,14 +136,15 @@ const ClientMallsPage = ({ malls }: Props) => {
       setSelectedEatery(null);
     } else {
       setSearchTerm(item.name);
-      setSelectedEatery({ mallId: item.mallId, eateryId: item.id });
+      setSelectedEatery({ mallId: item.mall_id, eateryId: item.id });
+
     }
   };
 
   return (
     <div>
       {/* Hero with search */}
-      <header className="hero bg-[url('/images/landing-bg.jpg')] bg-cover bg-center h-[50vh] flex flex-col items-center justify-center text-white px-4 text-center">
+      <header className="hero bg-[url('/images/landing-bg.jpg')] bg-cover bg-center h-[50vh] flex flex-col items-center justify-center text-white px-4 text-center bg-[rgba(0,0,0,0.8)] z-10">
         <h1 className="text-4xl font-bold mb-2">Where to Jiak?</h1>
         <p className="mb-4 text-lg max-w-xl">
           Discover top eateries in malls across Singapore!
