@@ -286,11 +286,12 @@ const EateriesFilter = () => {
                     <span className="text-xs bg-gray-700 text-white rounded px-2 py-0.5">
                       {eatery.total_reviews} reviews
                     </span>
-                    {eatery.rating >= 4.5 && eatery.total_reviews > 500 && (
-                      <span className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full">
-                        🌟 Crowd Favorite
-                      </span>
-                    )}
+                  {(eatery.rating ?? 0) >= 4.5 && (eatery.total_reviews ?? 0) > 500 && (
+                    <span className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full">
+                      🌟 Crowd Favorite
+                    </span>
+                  )}
+
                   </a>
                   <p className="text-sm">
                     📍 Level {eatery.floor}-#{eatery.unit}
