@@ -306,7 +306,7 @@ const EateriesFilter = () => {
                   </p>
                   {eatery.summary?.most_mentioned && (
                     <div className="flex flex-wrap gap-1 mt-1 text-xs text-yellow-100">
-                      {eatery.summary.most_mentioned
+                      {(eatery.summary.most_mentioned as string)
                         .split(",")
                         .slice(0, 2)
                         .map((dish: string, index: number) => (
