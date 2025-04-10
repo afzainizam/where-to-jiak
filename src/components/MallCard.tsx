@@ -3,6 +3,13 @@ import Link from "next/link";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { GiKnifeFork } from "react-icons/gi";
 
+interface MallCardProps {
+  mall: any;
+  expandedEatery?: any;
+  highlightEatery?: string | null;
+}
+
+
 // Utility function to create an embed URL from the standard Google Maps URL.
 function getEmbedUrl(googleMapsUrl: string): string {
   const match = googleMapsUrl.match(/q=place_id:(.*)$/);
@@ -14,8 +21,7 @@ function getEmbedUrl(googleMapsUrl: string): string {
   }
   return "";
 }
-
-export default function MallCard({ mall, expandedEatery }: { mall: any; expandedEatery?: any }) {
+export default function MallCard({ mall, expandedEatery, highlightEatery }: MallCardProps) {
   // Calculate the featured eatery (the one with the highest rating)
   const featuredEatery = mall.eateries?.reduce(
     (prev: any, curr: any) => (curr.rating > prev.rating ? curr : prev),
