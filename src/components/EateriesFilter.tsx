@@ -54,7 +54,7 @@ function getTodayOpeningHours(weekdayText: string[]): string {
 
 const EateriesFilter = () => {
   const { mallId } = useParams();
-    const router = useRouter();
+  const router = useRouter();
   const [mall, setMall] = useState<any>(null);
   const [bookmarked, setBookmarked] = useState<string[]>([]);
   const [bgImageMap, setBgImageMap] = useState<Record<string, number>>({});
@@ -94,51 +94,51 @@ const EateriesFilter = () => {
     localStorage.setItem("bookmarkedEateries", JSON.stringify(updated));
   };
 
-    const cuisines: string[] =
-      mall?.eateries?.map((e: Eatery) => e.cuisine_type).filter(Boolean) ?? [];
-    const uniqueCuisines = Array.from(new Set(cuisines)) as string[];
+  const cuisines: string[] =
+    mall?.eateries?.map((e: Eatery) => e.cuisine_type).filter(Boolean) ?? [];
+  const uniqueCuisines = Array.from(new Set(cuisines)) as string[];
 
   const filteredEateries = mall?.eateries.filter((e: Eatery) => {
     const matchHalal = !filters.halalOnly || e.halal;
     const matchCuisine =
       filters.cuisine === "All" || e.cuisine_type === filters.cuisine;
-      const matchRating = (e.rating ?? 0) >= filters.minRating;
+    const matchRating = (e.rating ?? 0) >= filters.minRating;
     return matchHalal && matchCuisine && matchRating;
   });
 
-    if (!mall) return <div>Loading...</div>;
+  if (!mall) return <div>Loading...</div>;
 
-    return (
-      <div className="p-4">
-        {/* Back Button */}
-        <div className="mb-4">
-          <button
-            onClick={() => router.back()}
-            className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+  return (
+    <div className="p-4">
+      {/* Back Button */}
+      <div className="mb-4">
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+        >
+          ← Back
+        </button>
+      </div>
+
+      {/* Mall Info Section */}
+      <div className="bg-gray-900 p-4 rounded-lg shadow mb-6">
+        <h1 className="text-3xl font-bold text-white">{mall.name}</h1>
+        <p className="text-gray-300">{mall.location}</p>
+        <p className="text-yellow-400">
+          ⭐ {mall.stars} ({mall.total_reviews} reviews)
+        </p>
+        {mall.google_maps_url && (
+          <a
+            href={mall.google_maps_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-300 hover:underline inline-flex items-center gap-1 mt-2"
           >
-            ← Back
-          </button>
-        </div>
-        
-        {/* Mall Info Section */}
-        <div className="bg-gray-900 p-4 rounded-lg shadow mb-6">
-          <h1 className="text-3xl font-bold text-white">{mall.name}</h1>
-          <p className="text-gray-300">{mall.location}</p>
-          <p className="text-yellow-400">
-            ⭐ {mall.stars} ({mall.total_reviews} reviews)
-          </p>
-          {mall.google_maps_url && (
-            <a
-              href={mall.google_maps_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-300 hover:underline inline-flex items-center gap-1 mt-2"
-            >
-              <FaMapMarkerAlt />
-              View on Google Maps
-            </a>
-          )}
-        </div>
+            <FaMapMarkerAlt />
+            View on Google Maps
+          </a>
+        )}
+      </div>
 
       {/* Filters Section */}
       {mall.eateries.length > 4 && (
@@ -286,12 +286,12 @@ const EateriesFilter = () => {
                     <span className="text-xs bg-gray-700 text-white rounded px-2 py-0.5">
                       {eatery.total_reviews} reviews
                     </span>
-                  {(eatery.rating ?? 0) >= 4.5 && (eatery.total_reviews ?? 0) > 500 && (
-                    <span className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full">
-                      🌟 Crowd Favorite
-                    </span>
-                  )}
-
+                    {(eatery.rating ?? 0) >= 4.5 &&
+                      (eatery.total_reviews ?? 0) > 500 && (
+                        <span className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full">
+                          🌟 Crowd Favorite
+                        </span>
+                      )}
                   </a>
                   <p className="text-sm">
                     📍 Level {eatery.floor}-#{eatery.unit}
@@ -309,7 +309,7 @@ const EateriesFilter = () => {
                       {eatery.summary.most_mentioned
                         .split(",")
                         .slice(0, 2)
-                        .map((dish, index) => (
+                        .map((dish: string, index: number) => (
                           <span
                             key={index}
                             className="bg-yellow-700 rounded-full px-2 py-0.5"
