@@ -8,6 +8,7 @@ export interface Mall {
   name: string;
   location: string;
   coordinates: Location | null;  // Nullable because coordinates might be missing in some malls
+  region: string;
   eateries: Eatery[];  // List of eateries
 }
 
@@ -27,7 +28,6 @@ export interface Eatery {
   logo_url?: string;
   rating?: number;
   total_reviews?: number;
-  region: string;
   location?: Location;  // This location is required for eateries
   summary?: {
     one_liner: string;
