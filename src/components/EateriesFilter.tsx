@@ -102,7 +102,7 @@ const EateriesFilter = () => {
     const matchHalal = !filters.halalOnly || e.halal;
     const matchCuisine =
       filters.cuisine === "All" || e.cuisine_type === filters.cuisine;
-    const matchRating = e.rating >= filters.minRating;
+      const matchRating = (e.rating ?? 0) >= filters.minRating;
     return matchHalal && matchCuisine && matchRating;
   });
 
