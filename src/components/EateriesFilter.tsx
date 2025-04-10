@@ -94,9 +94,9 @@ const EateriesFilter = () => {
     localStorage.setItem("bookmarkedEateries", JSON.stringify(updated));
   };
 
-  const cuisines =
-    mall?.eateries?.map((e: Eatery) => e.cuisine_type).filter(Boolean) ?? [];
-  const uniqueCuisines = Array.from(new Set(cuisines));
+    const cuisines: string[] =
+      mall?.eateries?.map((e: Eatery) => e.cuisine_type).filter(Boolean) ?? [];
+    const uniqueCuisines = Array.from(new Set(cuisines)) as string[];
 
   const filteredEateries = mall?.eateries.filter((e: Eatery) => {
     const matchHalal = !filters.halalOnly || e.halal;
