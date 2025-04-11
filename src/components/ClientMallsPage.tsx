@@ -1,30 +1,30 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import MallCard from "@/components/MallCard";
 import SearchBar from "@/components/SearchBar";
 import MallSquaresRow from "@/components/MallSquaresRow";
+import EateryDetail from "@/components/EateryDetail";
 import type { Mall, Eatery } from "@/types/mall";
 import type { Suggestion } from "@/components/SearchBar";
-
-
+import EateryCard from "@/components/EateryCard";
 
 interface Props {
   malls: Mall[];
 }
 
 const ClientMallsPage = ({ malls }: Props) => {
+  const router = useRouter();
   const [region, setRegion] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredMalls, setFilteredMalls] = useState<Mall[]>([]);
   const [randomTagline, setRandomTagline] = useState("");
-  const [selectedEatery, setSelectedEatery] = useState<{
-    mallId: string;
-    eateryId: string;
-  } | null>(null);
+  // Only declare selectedMall and selectedEatery *inside* the component:
+  const [selectedMall, setSelectedMall] = useState<Mall | null>(null);
+  const [selectedEatery, setSelectedEatery] = useState<Eatery | null>(null);
 
   const regions = ["Nearby", "North", "North-East", "East", "West", "Central"];
-
   const taglines = [
     "Feeling hungry? So is your stomach.",
     "Discover hidden gems near you!",
@@ -41,70 +41,56 @@ const ClientMallsPage = ({ malls }: Props) => {
     setRandomTagline(taglines[index]);
   }, []);
 
-    useEffect(() => {
-      let updated = [...malls];
-
-      // First, filter by search term if provided.
-      if (searchTerm.trim() !== "") {
-        const lowerSearch = searchTerm.toLowerCase();
-        updated = updated.filter(
-          (mall) =>
-            mall.name.toLowerCase().includes(lowerSearch) ||
-            mall.eateries.some((e) => e.name.toLowerCase().includes(lowerSearch))
-        );
-      }
-
-        if (region === "Nearby") {
-          // Use geolocation to get the user's current position.
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const { latitude, longitude } = position.coords;
-
-                // Filter only malls with valid coordinates.
-                const mallsWithDistance = updated
-                  .filter(
-                    (mall) =>
-                      mall.coordinates &&
-                      typeof mall.coordinates.lat === "number" &&
-                      typeof mall.coordinates.lng === "number"
-                  )
-                  .map((mall) => {
-                    const dist = getDistance(
-                      latitude,
-                      longitude,
-                      mall.coordinates!.lat,  // non-null assertion added here
-                      mall.coordinates!.lng   // and here
-                    );
-                    return { ...mall, distance: dist };
-                  });
-
-                // Sort malls by distance and update filteredMalls with the nearest one.
-                mallsWithDistance.sort((a, b) => a.distance - b.distance);
-                setFilteredMalls(mallsWithDistance.slice(0, 1));
-              },
-              (error) => {
-                console.error("Geolocation error:", error);
-                // Fallback: just use the updated list without nearby filtering.
-                setFilteredMalls([]);
-              }
-            );
-          } else {
-            console.warn("Geolocation is not supported by this browser.");
+  useEffect(() => {
+    let updated = [...malls];
+    if (searchTerm.trim() !== "") {
+      const lowerSearch = searchTerm.toLowerCase();
+      updated = updated.filter(
+        (mall) =>
+          mall.name.toLowerCase().includes(lowerSearch) ||
+          mall.eateries.some((e) => e.name.toLowerCase().includes(lowerSearch))
+      );
+    }
+    if (region === "Nearby") {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const mallsWithDistance = updated
+              .filter(
+                (mall) =>
+                  mall.coordinates &&
+                  typeof mall.coordinates.lat === "number" &&
+                  typeof mall.coordinates.lng === "number"
+              )
+              .map((mall) => {
+                const dist = getDistance(
+                  latitude,
+                  longitude,
+                  mall.coordinates!.lat,
+                  mall.coordinates!.lng
+                );
+                return { ...mall, distance: dist };
+              });
+            mallsWithDistance.sort((a, b) => a.distance - b.distance);
+            setFilteredMalls(mallsWithDistance.slice(0, 1));
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
             setFilteredMalls([]);
           }
-        } else {
-          // If region is not 'Nearby' and not 'All', filter by region.
-          if (region !== "All") {
-            updated = updated.filter((mall) => mall.region === region);
-          }
-          // Randomize and take one (or adjust as desired).
-          setFilteredMalls(updated.sort(() => 0.5 - Math.random()).slice(0, 1));
-        }
-
-
-    }, [region, searchTerm, malls]);
-
+        );
+      } else {
+        console.warn("Geolocation is not supported by this browser.");
+        setFilteredMalls([]);
+      }
+    } else {
+      if (region !== "All") {
+        updated = updated.filter((mall) => mall.region === region);
+      }
+      setFilteredMalls(updated.sort(() => 0.5 - Math.random()).slice(0, 1));
+    }
+  }, [region, searchTerm, malls]);
 
   const regionFilteredMalls = useMemo(() => {
     let results = [...malls];
@@ -124,24 +110,42 @@ const ClientMallsPage = ({ malls }: Props) => {
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setSelectedEatery(null); // Clear any selected eatery on new search
+    setSelectedMall(null);
+    setSelectedEatery(null);
   };
 
   const handleRegionClick = (r: string) => {
     setRegion(r);
-    setSelectedEatery(null); // Clear selected eatery when changing region
+    setSearchTerm(""); // Clear the search term here!
+    setSelectedMall(null);
+    setSelectedEatery(null);
   };
 
-    const handleSelectSuggestion = (item: Suggestion) => {
-      if (item.type === "mall") {
-        setSearchTerm(item.name);
-        setSelectedEatery(null);
-      } else {
-        setSearchTerm(item.name);
-        setSelectedEatery({ mallId: item.mallId!, eateryId: item.id });
-      }
-    };
+  const handleSelectSuggestion = (item: Suggestion) => {
+    setSearchTerm(item.name);
 
+    if (item.type === "mall") {
+      const fullMall = malls.find((mall) => mall.id === item.id);
+      setSelectedMall(fullMall || null);
+      setSelectedEatery(null);
+    } else {
+      let foundEatery: Eatery | undefined;
+      malls.forEach((mall) => {
+        const e = mall.eateries.find((e) => e.id === item.id);
+        if (e) foundEatery = e;
+      });
+      setSelectedEatery(foundEatery || null);
+      setSelectedMall(null);
+    }
+  };
+
+  // Compute the title for the MallCard based on state.
+  const mallCardTitle: string =
+    selectedMall || selectedEatery || searchTerm.trim() !== ""
+      ? ""
+      : region !== "All"
+      ? `Recommended Jiak spot in the ${region}`
+      : "Jiak Spot of the Day";
 
   return (
     <div>
@@ -149,7 +153,7 @@ const ClientMallsPage = ({ malls }: Props) => {
       <header className="hero bg-[url('/images/landing-bg.jpg')] bg-cover bg-center h-[50vh] flex flex-col items-center justify-center text-white px-4 text-center bg-[rgba(0,0,0,0.8)] z-10">
         <h1 className="text-4xl font-bold mb-2">Where to Jiak?</h1>
         <p className="mb-4 text-lg max-w-xl">
-          Discover top eateries in malls across Singapore!
+          Discover top eateries in MALLS across Singapore!
         </p>
         <div className="max-w-md w-full">
           <SearchBar
@@ -182,38 +186,62 @@ const ClientMallsPage = ({ malls }: Props) => {
         ))}
       </div>
 
-      {/* Paginated Mall Squares Row (for region selections) */}
-      {region !== "All" && regionFilteredMalls.length > 0 && (
-        <MallSquaresRow malls={regionFilteredMalls} />
+      {/* Conditional Rendering */}
+      {selectedMall ? (
+        <MallCard mall={selectedMall} />
+      ) : selectedEatery ? (
+        <div>
+          <EateryCard
+            eatery={selectedEatery}
+            bgIndex={Math.floor(Math.random() * 10) + 1}
+            headerTitle={`This eatery is at ${
+              malls.find((mall) => mall.id === selectedEatery.mall_id)?.name ||
+              "the mall"
+            }`}
+            onMore={() => router.push(`/mall/${selectedEatery.mall_id}`)}
+          />
+        </div>
+      ) : (
+        <>
+          {region !== "All" && regionFilteredMalls.length > 0 && (
+            <MallSquaresRow malls={regionFilteredMalls} />
+          )}
+          <div
+            className={`grid ${
+              filteredMalls.length === 1 ? "md:grid-cols-1" : "md:grid-cols-2"
+            } gap-6 px-4 justify-items-center`}
+          >
+            {filteredMalls.length > 0 ? (
+              filteredMalls.map((mall) => (
+                <MallCard
+                  key={mall.id}
+                  mall={mall}
+                  highlightEatery={
+                    selectedEatery
+                      ? (selectedEatery as { id: string }).id
+                      : null
+                  }
+                  title={mallCardTitle}
+                />
+              ))
+            ) : (
+              <p className="text-white text-center col-span-full">
+                No results found for "{searchTerm}"
+              </p>
+            )}
+          </div>
+        </>
       )}
-
-      {/* Mall Cards */}
-      <div
-        className={`grid ${
-          filteredMalls.length === 1 ? "md:grid-cols-1" : "md:grid-cols-2"
-        } gap-6 px-4 justify-items-center`}
-      >
-        {filteredMalls.length > 0 ? (
-          filteredMalls.map((mall) => (
-            <MallCard
-              key={mall.id}
-              mall={mall}
-              highlightEatery={
-                selectedEatery?.mallId === mall.id ? selectedEatery.eateryId : null
-              }
-            />
-          ))
-        ) : (
-          <p className="text-white text-center col-span-full">
-            No results found for "{searchTerm}"
-          </p>
-        )}
-      </div>
     </div>
   );
 };
 
-function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function getDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
   const R = 6371e3; // Earth's radius in meters
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const φ1 = toRad(lat1);
@@ -226,6 +254,5 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
-
 
 export default ClientMallsPage;

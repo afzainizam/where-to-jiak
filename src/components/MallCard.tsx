@@ -4,9 +4,10 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import { GiKnifeFork } from "react-icons/gi";
 
 interface MallCardProps {
-  mall: any;
+  mall: any;  // Ideally, use your defined type instead of any
   expandedEatery?: any;
   highlightEatery?: string | null;
+  title?: string; // Add an optional title prop
 }
 
 
@@ -21,7 +22,7 @@ function getEmbedUrl(googleMapsUrl: string): string {
   }
   return "";
 }
-export default function MallCard({ mall, expandedEatery, highlightEatery }: MallCardProps) {
+export default function MallCard({ mall, expandedEatery, highlightEatery, title }: MallCardProps) {
   // Calculate the featured eatery (the one with the highest rating)
   const featuredEatery = mall.eateries?.reduce(
     (prev: any, curr: any) => (curr.rating > prev.rating ? curr : prev),
@@ -41,9 +42,9 @@ export default function MallCard({ mall, expandedEatery, highlightEatery }: Mall
   const embedUrl = mall.google_maps_url ? getEmbedUrl(mall.google_maps_url) : "";
 
   return (
-    <div className="mx-auto max-w-4xl">
-      {/* Title above the card */}
-      <h1 className="text-center text-3xl font-bold mb-4">Jiak Spot of the Day</h1>
+    <div className="mx-auto max-w-4xl p-4">
+          {/* Conditionally render the title */}
+          {title && <h1 className="text-center text-3xl font-bold mb-4">{title}</h1>}
       <div className="w-full bg-gray-900 text-white rounded-xl shadow-lg mb-8 border border-gray-700">
         {/* Top Half: Google Map with rounded top corners */}
           <div className="rounded-t-xl overflow-hidden w-full h-64 relative">
@@ -102,7 +103,7 @@ export default function MallCard({ mall, expandedEatery, highlightEatery }: Mall
             <div>
               <Link href={`/mall/${mall.id}`}>
                 <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                  View More Jiak Eateries
+                  View More Eateries
                 </button>
               </Link>
             </div>
@@ -178,15 +179,15 @@ export default function MallCard({ mall, expandedEatery, highlightEatery }: Mall
                         ➤ More...
                       </summary>
                       <p className="mt-1">
-                        <strong>Common Themes:</strong>{" "}
+                        <strong className="text-yellow-400">Common Themes:</strong>{" "}
                         {featuredEatery.summary.common_themes}
                       </p>
                       <p>
-                        <strong>Most Mentioned:</strong>{" "}
+                        <strong className="text-yellow-400">Most Mentioned:</strong>{" "}
                         {featuredEatery.summary.most_mentioned}
                       </p>
                       <p>
-                        <strong>Biggest Complaint:</strong>{" "}
+                        <strong className="text-yellow-400">Biggest Complaint:</strong>{" "}
                         {featuredEatery.summary.biggest_complaint}
                       </p>
                     </details>

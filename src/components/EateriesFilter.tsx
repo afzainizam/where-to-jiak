@@ -9,6 +9,7 @@ import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { FaStar, FaMapMarkerAlt, FaGlobe } from "react-icons/fa"; // Make sure FaGlobe is imported
 import type { Mall, Eatery } from "@/types/mall";
 import { useRouter } from "next/navigation";
+import EateryCard from "@/components/EateryCard";
 
 function isOpenNow(openingHoursDetails: any): boolean {
   if (!openingHoursDetails || !openingHoursDetails.periods) return false;
@@ -37,10 +38,8 @@ function isOpenNow(openingHoursDetails: any): boolean {
 function isInvalidLogo(url: string | undefined): boolean {
   if (!url) return true;
   return (
-    //    url.includes("favicon") ||
     url.includes("restaurant-71") ||
     url.includes("localhost") ||
-    //    url.endsWith(".ico") ||
     url.includes("default") ||
     url.includes("placeholder")
   );
@@ -106,7 +105,13 @@ const EateriesFilter = () => {
     return matchHalal && matchCuisine && matchRating;
   });
 
+  // Check if mall data has been loaded
   if (!mall) return <div>Loading...</div>;
+
+  // Define the street view URL using mall coordinates
+  const streetViewUrl = mall.coordinates
+    ? `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${mall.coordinates.lat},${mall.coordinates.lng}&heading=235&pitch=10&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
+    : "";
 
   return (
     <div className="p-4">
@@ -119,27 +124,40 @@ const EateriesFilter = () => {
           ← Back
         </button>
       </div>
-
-      {/* Mall Info Section */}
-      <div className="bg-gray-900 p-4 rounded-lg shadow mb-6">
-        <h1 className="text-3xl font-bold text-white">{mall.name}</h1>
-        <p className="text-gray-300">{mall.location}</p>
-        <p className="text-yellow-400">
-          ⭐ {mall.stars} ({mall.total_reviews} reviews)
-        </p>
-        {mall.google_maps_url && (
-          <a
-            href={mall.google_maps_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-300 hover:underline inline-flex items-center gap-1 mt-2"
+      
+      {/* Mall Info Section with Street View Background */}
+      <div
+        className="p-0 rounded-lg shadow mb-6"
+        style={{
+          backgroundImage: `url(${streetViewUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {/* Overlay container to darken the background for readability */}
+          <div
+            className="p-3 rounded"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.7)" }}
           >
-            <FaMapMarkerAlt />
-            View on Google Maps
-          </a>
-        )}
+          <h1 className="text-3xl font-bold text-white">{mall.name}</h1>
+          <p className="text-gray-300">{mall.location}</p>
+          <p className="text-yellow-400">
+            ⭐ {mall.stars} ({mall.total_reviews} reviews)
+          </p>
+          {mall.google_maps_url && (
+            <a
+              href={mall.google_maps_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-300 hover:underline inline-flex items-center gap-1 mt-2"
+            >
+              <FaMapMarkerAlt />
+              View on Google Maps
+            </a>
+          )}
+        </div>
       </div>
-
+      
       {/* Filters Section */}
       {mall.eateries.length > 4 && (
         <div className="bg-gray-900 p-4 rounded-lg shadow mb-6 space-y-2">
@@ -198,181 +216,13 @@ const EateriesFilter = () => {
           </div>
         </div>
       )}
-
+      
       {/* Eateries Grid */}
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-3 gap-0">
         {filteredEateries.map((eatery: Eatery) => {
           const bgIndex = bgImageMap[eatery.id] || 1;
           return (
-            <div
-              key={eatery.id}
-              className="rounded-xl overflow-hidden border border-gray-700 shadow-lg bg-black"
-            >
-              <div className="relative w-full h-52">
-                <img
-                  src={`/eatery-bg/bg${bgIndex}.jpg`}
-                  alt="Background"
-                  className="object-cover w-full h-full"
-                />
-                <div className="absolute inset-0 bg-[rgba(0,0,0,0.8)] z-10" />
-
-                {/* Logo / Website Icon */}
-                <div className="absolute top-2 right-2 z-30">
-                  <div className="bg-white p-2 rounded-xl shadow flex items-center justify-center">
-                    {eatery.website ? (
-                      isInvalidLogo(eatery.logo_url) ? (
-                        <a
-                          href={eatery.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Visit website"
-                        >
-                          <FaGlobe className="text-gray-800 text-xl" />
-                        </a>
-                      ) : (
-                        <a
-                          href={eatery.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Visit website"
-                        >
-                          <img
-                            src={eatery.logo_url}
-                            alt={eatery.name}
-                            width={40}
-                            height={40}
-                            className="object-contain rounded"
-                            loading="lazy"
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              target.onerror = null;
-                              target.src = "/placeholder.jpg";
-                            }}
-                          />
-                        </a>
-                      )
-                    ) : isInvalidLogo(eatery.logo_url) ? (
-                      <FaGlobe className="text-gray-400 text-xl" />
-                    ) : (
-                      <img
-                        src={eatery.logo_url}
-                        alt={eatery.name}
-                        width={40}
-                        height={40}
-                        className="object-contain rounded"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          target.onerror = null;
-                          target.src = "/placeholder.jpg";
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Information Overlay */}
-                <div className="absolute inset-0 z-20 flex flex-col justify-end p-4 text-white text-sm gap-1">
-                  <h2 className="text-base font-bold text-white">
-                    {eatery.name}
-                  </h2>
-                  <a
-                    href={`https://www.google.com/maps/place/?q=place_id:${eatery.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-yellow-400 hover:underline inline-block cursor-pointer"
-                  >
-                    ⭐ {eatery.rating} |{" "}
-                    <span className="text-xs bg-gray-700 text-white rounded px-2 py-0.5">
-                      {eatery.total_reviews} reviews
-                    </span>
-                    {(eatery.rating ?? 0) >= 4.5 &&
-                      (eatery.total_reviews ?? 0) > 500 && (
-                        <span className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full">
-                          🌟 Crowd Favorite
-                        </span>
-                      )}
-                  </a>
-                  <p className="text-sm">
-                    📍 Level {eatery.floor}-#{eatery.unit}
-                  </p>
-                  <p className="flex items-center gap-1">
-                    <GiKnifeFork /> {eatery.cuisine_type}
-                    {eatery.halal && (
-                      <span className="bg-green-600 text-white text-xs px-2 rounded">
-                        Halal
-                      </span>
-                    )}
-                  </p>
-                  {(((eatery.summary?.most_mentioned || "") as string)
-                    .split(",")
-                    .slice(0, 2)
-                    .map((dish: string, index: number) => (
-                      <span key={index} className="bg-yellow-700 rounded-full px-2 py-0.5">
-                        👍{dish.trim()}
-                      </span>
-                    )))}
-
-                  </div>
-
-                {/* Bookmark Button */}
-                <button
-                  className="absolute top-2 left-2 text-white text-xl z-30"
-                  onClick={() => toggleBookmark(eatery.id)}
-                >
-                  {bookmarked.includes(eatery.id) ? (
-                    <FaHeart />
-                  ) : (
-                    <FaRegHeart />
-                  )}
-                </button>
-              </div>
-
-              {/* Summary and More Info */}
-              {eatery.hours && eatery.hours.length > 0 && (
-                <div className="text-sm text-gray-300 mt-2 flex-col justify-end p-2">
-                  <p className="flex items-center gap-1">
-                    <span className="font-medium text-white">🕒 Today:</span>{" "}
-                    {getTodayOpeningHours(eatery.hours)}
-                  </p>
-                  <details className="mt-1 text-gray-400">
-                    <summary className="cursor-pointer hover:text-gray-200 text-xs">
-                      Show full week
-                    </summary>
-                    <ul className="text-xs mt-1 pl-2 list-disc">
-                      {eatery.hours.map((day: string, index: number) => (
-                        <li key={index}>{day}</li>
-                      ))}
-                    </ul>
-                  </details>
-                </div>
-              )}
-
-              <div className="p-3">
-                <p className="text-gray-400 mt-2 italic text-sm">
-                  "{eatery.summary?.one_liner}"
-                </p>
-                {eatery.summary?.common_themes && (
-                  <details className="text-gray-400 mt-2 text-sm">
-                    <summary className="cursor-pointer text-blue-400 hover:text-blue-300">
-                      ➤ More...
-                    </summary>
-                    <p className="mt-1">
-                      <strong>Common Themes:</strong>{" "}
-                      {eatery.summary.common_themes}
-                    </p>
-                    <p>
-                      <strong>Most Mentioned:</strong>{" "}
-                      {eatery.summary.most_mentioned}
-                    </p>
-                    <p>
-                      <strong>Biggest Complaint:</strong>{" "}
-                      {eatery.summary.biggest_complaint}
-                    </p>
-                  </details>
-                )}
-              </div>
-            </div>
+            <EateryCard key={eatery.id} eatery={eatery} bgIndex={bgIndex} />
           );
         })}
       </div>
