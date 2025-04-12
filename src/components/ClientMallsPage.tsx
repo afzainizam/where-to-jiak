@@ -203,9 +203,9 @@ const ClientMallsPage = ({ malls }: Props) => {
         </div>
       ) : (
         <>
-          {region !== "All" && regionFilteredMalls.length > 0 && (
-            <MallSquaresRow malls={regionFilteredMalls} />
-          )}
+           {region !== "All" && regionFilteredMalls.length > 0 && (
+             <MallSquaresRow key={region} malls={regionFilteredMalls} />
+           )}
           <div
             className={`grid ${
               filteredMalls.length === 1 ? "md:grid-cols-1" : "md:grid-cols-2"

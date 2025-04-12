@@ -21,6 +21,7 @@ export interface Eatery {
   unit: string;
   cuisine_type: string;
   halal: boolean;
+  bestFoods?: string | string[];
   open_now?: boolean;
   hours?: string[];
   phone?: string;
