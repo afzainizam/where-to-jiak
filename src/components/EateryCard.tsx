@@ -7,11 +7,6 @@ import { FaGlobe } from "react-icons/fa";
 import type { Eatery } from "@/types/mall";
 import TruncatedName from "@/components/TruncatedName";
 
-// Helper function to truncate a string if it exceeds maxLength.
-const truncateString = (str: string, maxLength: number): string => {
-  return str.length > maxLength ? str.slice(0, maxLength) + "..." : str;
-};
-
 // Helper function to check if a logo URL is valid
 function isInvalidLogo(url: string | undefined): boolean {
   if (!url) return true;
@@ -38,21 +33,9 @@ interface EateryCardProps {
 }
 
 const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitle, onMore }) => {
-  // For summary fields that might be arrays or strings
-  const formatArrayOrString = (field: any): string => {
-    if (Array.isArray(field)) {
-      return field.join(", ");
-    } else if (typeof field === "string") {
-      return field;
-    }
-    return "";
-  };
-
-  // For Best foods, try both keys: "Best foods" and "Best_foods"
+  // Process "Best foods" from summary as before
   const bestFoodsData =
     eatery.summary && ((eatery.summary as any)["Best foods"] ?? (eatery.summary as any)["Best_foods"]) || null;
-
-  // Process the best foods into an array of trimmed strings.
   const bestFoodsArray: string[] = bestFoodsData
     ? Array.isArray(bestFoodsData)
       ? bestFoodsData.map((food: string) => food.trim()).filter((food: string) => food.length > 0)
@@ -61,24 +44,28 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
       : []
     : [];
 
-  // New: Using state to set the maps URL depending on device width.
+  // We now compute the maps URL based on the device type.
   const [mapsUrl, setMapsUrl] = useState<string>("");
   useEffect(() => {
-    // Check window width—if less than 768px, assume mobile, otherwise desktop.
-    const mobile = window.innerWidth < 768;
-    if (mobile) {
-      setMapsUrl(`https://www.google.com/maps/search/?api=1&query_place_id=${eatery.id}`);
-    } else {
-      setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${eatery.id}`);
+    if (typeof window !== "undefined") {
+      // Check the window width: if less than 768px, assume mobile.
+      const isMobile = window.innerWidth < 768;
+      // Use coordinates if available – assume eatery.location has lat and lng.
+      const lat = eatery.location?.lat;
+      const lng = eatery.location?.lng;
+      if (isMobile && lat && lng) {
+        // Use the geo URI. This should trigger the native map app on mobile.
+        setMapsUrl(`geo:${lat},${lng}?q=${encodeURIComponent(eatery.name)}`);
+      } else {
+        // On desktop, use the traditional Google Maps URL with the Place ID.
+        setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${eatery.id}`);
+      }
     }
-  }, [eatery.id]);
+  }, [eatery]);
 
   return (
-    // Outer wrapper with padding applied to the whole card.
     <div className="p-4">
-      {/* Add a maximum height and vertical auto overflow to allow scrolling */}
       <div className="rounded-xl overflow-hidden border border-gray-700 shadow-lg bg-black max-h-[600px] overflow-y-auto">
-        {/* Header section: Render only if headerTitle and onMore are provided */}
         {headerTitle && onMore && (
           <div className="flex justify-between items-center p-4 bg-gray-800 text-white">
             <div className="text-lg font-bold text-left">{headerTitle}</div>
@@ -90,8 +77,6 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
             </button>
           </div>
         )}
-
-        {/* Image and overlay section */}
         <div className="relative w-full h-52">
           <img
             src={`/eatery-bg/bg${bgIndex}.jpg`}
@@ -99,7 +84,6 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
             className="object-cover w-full h-full"
           />
           <div className="absolute inset-0 bg-[rgba(0,0,0,0.8)] z-10" />
-          {/* Logo / Website Icon */}
           <div className="absolute top-2 right-2 z-30">
             <div className="bg-white p-2 rounded-xl shadow flex items-center justify-center">
               {eatery.website ? (
@@ -153,9 +137,7 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
               )}
             </div>
           </div>
-          {/* Information Overlay */}
           <div className="absolute inset-0 z-20 flex flex-col justify-end p-4 text-white text-sm gap-1">
-            {/* Eatery Name displayed with TruncatedName component */}
             <h2 className="text-base font-bold text-white">
               <TruncatedName fullName={eatery.name} maxLength={25} />
             </h2>
@@ -169,12 +151,11 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
               <span className="text-xs bg-gray-700 text-white rounded px-2 py-0.5">
                 {eatery.total_reviews} reviews
               </span>
-              {(eatery.rating ?? 0) >= 4.5 &&
-                (eatery.total_reviews ?? 0) > 500 && (
-                  <span className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full">
-                    🌟 Crowd Favorite
-                  </span>
-                )}
+              {(eatery.rating ?? 0) >= 4.5 && (eatery.total_reviews ?? 0) > 500 && (
+                <span className="bg-pink-600 text-white text-xs px-2 py-0.5 rounded-full">
+                  🌟 Crowd Favorite
+                </span>
+              )}
             </a>
             <p className="text-sm">
               📍 Level {eatery.floor}-#{eatery.unit}
@@ -187,11 +168,9 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
                 </span>
               )}
             </p>
-
-            {/* Display Best foods if available, showing up to 3 items */}
             {eatery.summary && bestFoodsArray.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {bestFoodsArray.slice(0, 2).map((food: string, index: number) => (
+                {bestFoodsArray.slice(0, 3).map((food: string, index: number) => (
                   <span
                     key={index}
                     className="inline-block self-start w-auto bg-yellow-700 rounded-full px-2 py-0.5"
@@ -203,8 +182,6 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
             )}
           </div>
         </div>
-
-        {/* Summary and More Info section */}
         {eatery.hours && eatery.hours.length > 0 && (
           <div className="text-sm text-gray-300 mt-2 flex-col justify-end p-2">
             <p className="flex items-center gap-1">
@@ -223,8 +200,6 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
             </details>
           </div>
         )}
-
-        {/* Additional Summary Content */}
         <div className="p-3">
           <p className="text-gray-400 mt-2 italic text-sm">
             "{eatery.summary?.one_liner}"
