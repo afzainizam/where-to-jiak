@@ -7,14 +7,13 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import EateryCard from "@/components/EateryCard";
 
 interface MallCardProps {
-  mall: any; // Ideally, use your defined type
+  mall: any; // Ideally, use your defined type for malls
   expandedEatery?: any;
   highlightEatery?: string | null;
   title?: string; // Optional title prop
 }
 
-// Utility function to create an embed URL from a Google Maps URL.
-// (We'll still use this for the map iframe.)
+// Utility function to create an embed URL from the mall’s Google Maps URL.
 function getEmbedUrl(googleMapsUrl: string): string {
   const match = googleMapsUrl.match(/q=place_id:(.*)$/);
   if (match && match[1]) {
@@ -25,6 +24,12 @@ function getEmbedUrl(googleMapsUrl: string): string {
   return "";
 }
 
+// Helper: detect if device is iOS
+const isIOS = (): boolean => {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+};
+
 export default function MallCard({ mall, expandedEatery, highlightEatery, title }: MallCardProps) {
   // Determine the featured eatery based on highest rating.
   const featuredEatery = mall.eateries?.reduce(
@@ -32,7 +37,7 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
     mall.eateries[0]
   );
 
-  // Compute today's opening hours from the featured eatery.
+  // Compute today's opening hours for the featured eatery.
   let todayHours = "Hours not available";
   if (featuredEatery && featuredEatery.hours && featuredEatery.hours.length > 0) {
     const today = new Date().getDay();
@@ -44,20 +49,31 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
   const embedUrl = mall.google_maps_url
     ? getEmbedUrl(mall.google_maps_url)
     : (mall.eateries && mall.eateries[0]?.location?.lat && mall.eateries[0]?.location?.lng)
-      ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0]?.location?.lat},${mall.eateries[0]?.location?.lng}`
+      ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0].location.lat},${mall.eateries[0].location.lng}`
       : "";
 
-  // New: Compute the correct maps URL for clicking "View on Google Maps"
+  // State for the maps URL that will be used for the "View on Google Maps" link.
   const [mapsUrl, setMapsUrl] = useState<string>("");
+
   useEffect(() => {
     if (typeof window !== "undefined" && mall.id) {
       const isMobile = window.innerWidth < 768;
-      const url = isMobile
-        ? `https://www.google.com/maps/search/?api=1&query_place_id=${mall.id}`
-        : `https://www.google.com/maps/place/?q=place_id:${mall.id}`;
-      setMapsUrl(url);
+      // For mobile devices try using coordinates if available.
+      const { lat, lng } = mall.coordinates || {};
+      if (isMobile && lat && lng) {
+        if (isIOS()) {
+          // Use the comgooglemaps:// scheme for iOS
+          setMapsUrl(`comgooglemaps://?q=${encodeURIComponent(mall.name)}&center=${lat},${lng}`);
+        } else {
+          // For Android mobile, use the geo: URI scheme.
+          setMapsUrl(`geo:${lat},${lng}?q=${encodeURIComponent(mall.name)}`);
+        }
+      } else {
+        // On desktop or if coordinates are missing, fall back to the standard URL using the Place ID.
+        setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${mall.id}`);
+      }
     }
-  }, [mall.id]);
+  }, [mall]);
 
   return (
     <div className="mx-auto max-w-4xl p-4">
@@ -82,7 +98,7 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
           )}
         </div>
 
-        {/* Bottom Half: Mall details */}
+        {/* Bottom Half: Mall Details */}
         <div className="p-4">
           <div className="flex justify-between items-start flex-wrap">
             <div>
