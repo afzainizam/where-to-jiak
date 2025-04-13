@@ -60,6 +60,18 @@ const EateriesFilter = () => {
     minRating: 0,
   });
 
+    // In EateriesFilter.tsx, add a similar useEffect to compute mapsUrl for the mall:
+    const [mapsUrl, setMapsUrl] = useState<string>("");
+    useEffect(() => {
+      if (typeof window !== "undefined" && mall && mall.id) {
+        const isMobile = window.innerWidth < 768;
+        const url = isMobile
+          ? `https://www.google.com/maps/search/?api=1&query_place_id=${mall.id}`
+          : `https://www.google.com/maps/place/?q=place_id:${mall.id}`;
+        setMapsUrl(url);
+      }
+    }, [mall]);
+    
   // New state for carpark records that match this mall.
   const [matchingCarparks, setMatchingCarparks] = useState<CarparkRecord[]>([]);
 
@@ -160,9 +172,9 @@ const EateriesFilter = () => {
           <p className="text-yellow-400">
             ⭐ {mall.stars} ({mall.total_reviews} reviews)
           </p>
-          {mall.google_maps_url && (
+          {mapsUrl && (
             <a
-              href={mall.google_maps_url}
+              href={mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-300 hover:underline inline-flex items-center gap-1 mt-2"

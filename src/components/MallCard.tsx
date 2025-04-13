@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import EateryCard from "@/components/EateryCard";
-import { fetchAllCarparksV2, CarparkRecord } from "@/services/carparkAvailability";
 
 interface MallCardProps {
   mall: any; // Ideally, use your defined type
@@ -15,6 +14,7 @@ interface MallCardProps {
 }
 
 // Utility function to create an embed URL from a Google Maps URL.
+// (We'll still use this for the map iframe.)
 function getEmbedUrl(googleMapsUrl: string): string {
   const match = googleMapsUrl.match(/q=place_id:(.*)$/);
   if (match && match[1]) {
@@ -32,7 +32,7 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
     mall.eateries[0]
   );
 
-  // Compute today's opening hours for the featured eatery (if available).
+  // Compute today's opening hours from the featured eatery.
   let todayHours = "Hours not available";
   if (featuredEatery && featuredEatery.hours && featuredEatery.hours.length > 0) {
     const today = new Date().getDay();
@@ -40,39 +40,24 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
     todayHours = featuredEatery.hours[index] || "Hours not available";
   }
 
-  // Generate the embed URL using the mall's Google Maps URL or fallback to coordinates.
+  // Generate the embed URL for the map iframe.
   const embedUrl = mall.google_maps_url
     ? getEmbedUrl(mall.google_maps_url)
-    : (mall.eateries &&
-         mall.eateries[0]?.location?.lat &&
-         mall.eateries[0]?.location?.lng)
-    ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0]?.location?.lat},${mall.eateries[0]?.location?.lng}`
-    : "";
+    : (mall.eateries && mall.eateries[0]?.location?.lat && mall.eateries[0]?.location?.lng)
+      ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0]?.location?.lat},${mall.eateries[0]?.location?.lng}`
+      : "";
 
-  // --- Carpark Availability Integration ---
-  // Use an array to store all matching carpark records.
-  const [matchingCarparks, setMatchingCarparks] = useState<CarparkRecord[]>([]);
-
-    useEffect(() => {
-      async function getCarparkData() {
-        try {
-          const apiKey = process.env.NEXT_PUBLIC_CARPARK_API_KEY || "";
-            const records = await fetchAllCarparksV2();
-          console.log("New Carpark API response:", records);
-          // Filter records by matching the mall name with the Development field.
-          const matches = records.filter((record: CarparkRecord) =>
-            record.Development.toLowerCase().includes(mall.name.toLowerCase())
-          );
-          setMatchingCarparks(matches);
-        } catch (error) {
-          console.error("Error fetching new carpark availability:", error);
-        }
-      }
-      if (mall && mall.name) {
-        getCarparkData();
-      }
-    }, [mall]);
-
+  // New: Compute the correct maps URL for clicking "View on Google Maps"
+  const [mapsUrl, setMapsUrl] = useState<string>("");
+  useEffect(() => {
+    if (typeof window !== "undefined" && mall.id) {
+      const isMobile = window.innerWidth < 768;
+      const url = isMobile
+        ? `https://www.google.com/maps/search/?api=1&query_place_id=${mall.id}`
+        : `https://www.google.com/maps/place/?q=place_id:${mall.id}`;
+      setMapsUrl(url);
+    }
+  }, [mall.id]);
 
   return (
     <div className="mx-auto max-w-4xl p-4">
@@ -106,9 +91,9 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
               <p className="text-yellow-400 text-sm">
                 ⭐ {mall.stars} ({mall.total_reviews} reviews)
               </p>
-              {mall.google_maps_url && (
+              {mapsUrl && (
                 <a
-                  href={mall.google_maps_url}
+                  href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-300 text-sm inline-flex items-center gap-1 mt-1 hover:underline"
@@ -126,17 +111,6 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
               </Link>
             </div>
           </div>
-
-          {/* Display carpark availability information. Will make it better later */}
-          {matchingCarparks.length > 0 && (
-            <div className="mt-2 text-sm text-gray-300">
-              {matchingCarparks.map((cp, index) => (
-                <div key={index}>
-                  {cp.Development}: {cp.AvailableLots} lots available
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Featured Eatery Section */}
           {featuredEatery && (

@@ -1,7 +1,7 @@
 // EateryCard.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { GiKnifeFork } from "react-icons/gi";
 import { FaGlobe } from "react-icons/fa";
 import type { Eatery } from "@/types/mall";
@@ -38,7 +38,7 @@ interface EateryCardProps {
 }
 
 const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitle, onMore }) => {
-  // For summary fields that might be arrays or strings, define helper functions:
+  // For summary fields that might be arrays or strings
   const formatArrayOrString = (field: any): string => {
     if (Array.isArray(field)) {
       return field.join(", ");
@@ -50,8 +50,7 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
 
   // For Best foods, try both keys: "Best foods" and "Best_foods"
   const bestFoodsData =
-    (eatery.summary && ((eatery.summary as any)["Best foods"] ?? (eatery.summary as any)["Best_foods"])) ||
-    null;
+    eatery.summary && ((eatery.summary as any)["Best foods"] ?? (eatery.summary as any)["Best_foods"]) || null;
 
   // Process the best foods into an array of trimmed strings.
   const bestFoodsArray: string[] = bestFoodsData
@@ -61,6 +60,18 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
       ? bestFoodsData.split(",").map((food: string) => food.trim()).filter((food: string) => food.length > 0)
       : []
     : [];
+
+  // New: Using state to set the maps URL depending on device width.
+  const [mapsUrl, setMapsUrl] = useState<string>("");
+  useEffect(() => {
+    // Check window width—if less than 768px, assume mobile, otherwise desktop.
+    const mobile = window.innerWidth < 768;
+    if (mobile) {
+      setMapsUrl(`https://www.google.com/maps/search/?api=1&query_place_id=${eatery.id}`);
+    } else {
+      setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${eatery.id}`);
+    }
+  }, [eatery.id]);
 
   return (
     // Outer wrapper with padding applied to the whole card.
@@ -149,7 +160,7 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
               <TruncatedName fullName={eatery.name} maxLength={25} />
             </h2>
             <a
-              href={`https://www.google.com/maps/place/?q=place_id:${eatery.id}`}
+              href={mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-400 hover:underline inline-block cursor-pointer"
