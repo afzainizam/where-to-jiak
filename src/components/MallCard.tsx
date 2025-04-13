@@ -127,7 +127,7 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
             </div>
           </div>
 
-          {/* Display carpark availability information */}
+          {/* Display carpark availability information. Will make it better later */}
           {matchingCarparks.length > 0 && (
             <div className="mt-2 text-sm text-gray-300">
               {matchingCarparks.map((cp, index) => (
