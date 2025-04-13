@@ -2,17 +2,19 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import EateryCard from "@/components/EateryCard";
+import { fetchAllCarparksV2, CarparkRecord } from "@/services/carparkAvailability";
 
 interface MallCardProps {
-  mall: any; // Ideally, use your defined type instead of any
+  mall: any; // Ideally, use your defined type
   expandedEatery?: any;
   highlightEatery?: string | null;
   title?: string; // Optional title prop
 }
 
-// Utility function to create an embed URL from the standard Google Maps URL.
+// Utility function to create an embed URL from a Google Maps URL.
 function getEmbedUrl(googleMapsUrl: string): string {
   const match = googleMapsUrl.match(/q=place_id:(.*)$/);
   if (match && match[1]) {
@@ -30,7 +32,7 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
     mall.eateries[0]
   );
 
-  // Compute today's opening hours from the featured eatery (if available)
+  // Compute today's opening hours for the featured eatery (if available).
   let todayHours = "Hours not available";
   if (featuredEatery && featuredEatery.hours && featuredEatery.hours.length > 0) {
     const today = new Date().getDay();
@@ -38,19 +40,45 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
     todayHours = featuredEatery.hours[index] || "Hours not available";
   }
 
-  // Generate the embed URL using the mall's Google Maps URL (or fallback to first eatery's coordinates)
+  // Generate the embed URL using the mall's Google Maps URL or fallback to coordinates.
   const embedUrl = mall.google_maps_url
     ? getEmbedUrl(mall.google_maps_url)
-    : (mall.eateries && mall.eateries[0]?.location?.lat && mall.eateries[0]?.location?.lng
-      ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0]?.location?.lat},${mall.eateries[0]?.location?.lng}`
-      : "");
+    : (mall.eateries &&
+         mall.eateries[0]?.location?.lat &&
+         mall.eateries[0]?.location?.lng)
+    ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0]?.location?.lat},${mall.eateries[0]?.location?.lng}`
+    : "";
+
+  // --- Carpark Availability Integration ---
+  // Use an array to store all matching carpark records.
+  const [matchingCarparks, setMatchingCarparks] = useState<CarparkRecord[]>([]);
+
+    useEffect(() => {
+      async function getCarparkData() {
+        try {
+          const apiKey = process.env.NEXT_PUBLIC_CARPARK_API_KEY || "";
+            const records = await fetchAllCarparksV2();
+          console.log("New Carpark API response:", records);
+          // Filter records by matching the mall name with the Development field.
+          const matches = records.filter((record: CarparkRecord) =>
+            record.Development.toLowerCase().includes(mall.name.toLowerCase())
+          );
+          setMatchingCarparks(matches);
+        } catch (error) {
+          console.error("Error fetching new carpark availability:", error);
+        }
+      }
+      if (mall && mall.name) {
+        getCarparkData();
+      }
+    }, [mall]);
+
 
   return (
     <div className="mx-auto max-w-4xl p-4">
-      {/* Render the title if provided */}
       {title && <h1 className="text-center text-3xl font-bold mb-4">{title}</h1>}
       <div className="w-full bg-gray-900 text-white rounded-xl shadow-lg mb-8 border border-gray-700">
-        {/* Top Half: Google Map with rounded top corners */}
+        {/* Top Half: Google Map */}
         <div className="rounded-t-xl overflow-hidden w-full h-64 relative">
           {embedUrl ? (
             <iframe
@@ -90,7 +118,6 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
                 </a>
               )}
             </div>
-            {/* Replace the logo with a button */}
             <div>
               <Link href={`/mall/${mall.id}`}>
                 <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
@@ -100,17 +127,26 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
             </div>
           </div>
 
+          {/* Display carpark availability information */}
+          {matchingCarparks.length > 0 && (
+            <div className="mt-2 text-sm text-gray-300">
+              {matchingCarparks.map((cp, index) => (
+                <div key={index}>
+                  {cp.Development}: {cp.AvailableLots} lots available
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Featured Eatery Section */}
           {featuredEatery && (
             <>
               <div className="mt-4">
                 <h3 className="text-lg font-bold">Featured Restaurant</h3>
               </div>
-              {/* Here we use the EateryCard component to render the featured eatery */}
               <EateryCard
                 eatery={featuredEatery}
                 bgIndex={Math.floor(Math.random() * 10) + 1}
-                // Optionally, if you want to pass additional props, do so here.
               />
             </>
           )}
