@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import EateryCard from "@/components/EateryCard";
 import { fetchAllCarparksV2, CarparkRecord } from "@/services/carparkAvailability";
 
+// Helper functions
 function isOpenNow(openingHoursDetails: any): boolean {
   if (!openingHoursDetails || !openingHoursDetails.periods) return false;
   const now = new Date();
@@ -48,6 +49,12 @@ function getTodayOpeningHours(weekdayText: string[]): string {
   return weekdayText[index] || "Hours not available";
 }
 
+// Helper: detect if device is iOS
+const isIOS = (): boolean => {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+};
+
 const EateriesFilter = () => {
   const { mallId } = useParams() as { mallId: string };
   const router = useRouter();
@@ -60,65 +67,71 @@ const EateriesFilter = () => {
     minRating: 0,
   });
 
-    // In EateriesFilter.tsx, add a similar useEffect to compute mapsUrl for the mall:
-    const [mapsUrl, setMapsUrl] = useState<string>("");
-    useEffect(() => {
-      if (typeof window !== "undefined" && mall && mall.id) {
-        const isMobile = window.innerWidth < 768;
-        const url = isMobile
-          ? `https://www.google.com/maps/search/?api=1&query_place_id=${mall.id}`
-          : `https://www.google.com/maps/place/?q=place_id:${mall.id}`;
-        setMapsUrl(url);
-      }
-    }, [mall]);
-    
-  // New state for carpark records that match this mall.
-  const [matchingCarparks, setMatchingCarparks] = useState<CarparkRecord[]>([]);
-
-    useEffect(() => {
-      async function fetchMall() {
-        console.log("Fetching mall with id:", mallId);
-        const docRef = doc(collection(db, "malls"), mallId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const mallData = docSnap.data();
-          console.log("Found mall data:", mallData);
-          setMall(mallData);
-          const generatedMap: Record<string, number> = {};
-          mallData.eateries.forEach((e: Eatery) => {
-            generatedMap[e.id] = Math.floor(Math.random() * 10) + 1;
-          });
-          setBgImageMap(generatedMap);
+  // State for Google Maps URL (for the mall)
+  const [mapsUrl, setMapsUrl] = useState<string>("");
+  useEffect(() => {
+    if (typeof window !== "undefined" && mall && mall.id) {
+      const isMobile = window.innerWidth < 768;
+      // If mall coordinates exist, use them; otherwise use fallback using Place ID.
+      const { lat, lng } = mall.coordinates || {};
+      if (isMobile && lat && lng) {
+        if (isIOS()) {
+          // For iOS, use the comgooglemaps scheme (requires Google Maps app to be installed)
+          setMapsUrl(`comgooglemaps://?q=${encodeURIComponent(mall.name)}&center=${lat},${lng}`);
         } else {
-          console.error("Mall document not found for id:", mallId);
-          setMall(null); // Or set an error state if preferred.
+          // For Android mobile, use the geo: URI scheme
+          setMapsUrl(`geo:${lat},${lng}?q=${encodeURIComponent(mall.name)}`);
         }
+      } else {
+        setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${mall.id}`);
       }
-      fetchMall();
+    }
+  }, [mall]);
 
-      const stored = localStorage.getItem("bookmarkedEateries");
-      if (stored) setBookmarked(JSON.parse(stored));
-    }, [mallId]);
+  // Fetch mall data from Firestore
+  useEffect(() => {
+    async function fetchMall() {
+      console.log("Fetching mall with id:", mallId);
+      const docRef = doc(collection(db, "malls"), mallId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const mallData = docSnap.data();
+        console.log("Found mall data:", mallData);
+        setMall(mallData);
+        const generatedMap: Record<string, number> = {};
+        mallData.eateries.forEach((e: Eatery) => {
+          generatedMap[e.id] = Math.floor(Math.random() * 10) + 1;
+        });
+        setBgImageMap(generatedMap);
+      } else {
+        console.error("Mall document not found for id:", mallId);
+        setMall(null);
+      }
+    }
+    fetchMall();
+    const stored = localStorage.getItem("bookmarkedEateries");
+    if (stored) setBookmarked(JSON.parse(stored));
+  }, [mallId]);
 
-        
-    useEffect(() => {
-      async function getCarparkData() {
-        try {
-          const records = await fetchAllCarparksV2();
-          console.log("Fetched carpark records:", records);
-          // Match records where the Development field (lowercased) contains the mall’s name (lowercased)
-          const matches = records.filter((record: CarparkRecord) =>
-            record.Development.toLowerCase().includes(mall.name.toLowerCase())
-          );
-          setMatchingCarparks(matches);
-        } catch (error) {
-          console.error("Error fetching carpark availability:", error);
-        }
+  // Fetch carpark data and match based on mall name
+  const [matchingCarparks, setMatchingCarparks] = useState<CarparkRecord[]>([]);
+  useEffect(() => {
+    async function getCarparkData() {
+      try {
+        const records = await fetchAllCarparksV2();
+        console.log("Fetched carpark records:", records);
+        const matches = records.filter((record: CarparkRecord) =>
+          record.Development.toLowerCase().includes(mall.name.toLowerCase())
+        );
+        setMatchingCarparks(matches);
+      } catch (error) {
+        console.error("Error fetching carpark availability:", error);
       }
-      if (mall && mall.name) {
-        getCarparkData();
-      }
-    }, [mall]);
+    }
+    if (mall && mall.name) {
+      getCarparkData();
+    }
+  }, [mall]);
 
   const toggleBookmark = (id: string) => {
     const updated = bookmarked.includes(id)
@@ -131,7 +144,6 @@ const EateriesFilter = () => {
   const cuisines: string[] =
     mall?.eateries?.map((e: Eatery) => e.cuisine_type).filter(Boolean) ?? [];
   const uniqueCuisines = Array.from(new Set(cuisines)) as string[];
-
   const filteredEateries = mall?.eateries.filter((e: Eatery) => {
     const matchHalal = !filters.halalOnly || e.halal;
     const matchCuisine = filters.cuisine === "All" || e.cuisine_type === filters.cuisine;
@@ -183,7 +195,6 @@ const EateriesFilter = () => {
               View on Google Maps
             </a>
           )}
-          {/* Display carpark availability information */}
           {matchingCarparks.length > 0 && (
             <div className="mt-2 text-sm text-gray-300">
               {matchingCarparks.map((cp, index) => (
@@ -193,7 +204,6 @@ const EateriesFilter = () => {
               ))}
             </div>
           )}
-
         </div>
       </div>
 
@@ -245,7 +255,7 @@ const EateriesFilter = () => {
         </div>
       )}
 
-      {/* Display Carpark Availability (if there are multiple matches, list them) */}
+      {/* Display Carpark Availability */}
       {matchingCarparks.length > 0 && (
         <div className="mt-2 text-sm text-gray-300">
           {matchingCarparks.map((cp, index) => (
