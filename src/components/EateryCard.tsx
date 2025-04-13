@@ -191,7 +191,7 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
             {/* Display Best foods if available, showing up to 3 items */}
             {eatery.summary && bestFoodsArray.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {bestFoodsArray.slice(0, 3).map((food: string, index: number) => (
+                {bestFoodsArray.slice(0, 2).map((food: string, index: number) => (
                   <span
                     key={index}
                     className="inline-block self-start w-auto bg-yellow-700 rounded-full px-2 py-0.5"
