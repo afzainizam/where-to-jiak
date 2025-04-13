@@ -25,6 +25,12 @@ function getTodayOpeningHours(hours: string[]): string {
   return hours[index] || "Hours not available";
 }
 
+// Helper: detect if device is iOS
+const isIOS = (): boolean => {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+};
+
 interface EateryCardProps {
   eatery: Eatery;
   bgIndex?: number; // Optional: allows you to pick a background image index.
@@ -33,7 +39,7 @@ interface EateryCardProps {
 }
 
 const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitle, onMore }) => {
-  // Process "Best foods" from summary as before
+  // Process "Best foods"
   const bestFoodsData =
     eatery.summary && ((eatery.summary as any)["Best foods"] ?? (eatery.summary as any)["Best_foods"]) || null;
   const bestFoodsArray: string[] = bestFoodsData
@@ -44,22 +50,26 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
       : []
     : [];
 
-  // We now compute the maps URL based on the device type.
+  // Compute the maps URL based on the device.
   const [mapsUrl, setMapsUrl] = useState<string>("");
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Check the window width: if less than 768px, assume mobile.
-      const isMobile = window.innerWidth < 768;
-      // Use coordinates if available – assume eatery.location has lat and lng.
+      const windowWidth = window.innerWidth;
+      const isMobile = windowWidth < 768;
       const lat = eatery.location?.lat;
       const lng = eatery.location?.lng;
-      if (isMobile && lat && lng) {
-        // Use the geo URI. This should trigger the native map app on mobile.
-        setMapsUrl(`geo:${lat},${lng}?q=${encodeURIComponent(eatery.name)}`);
-      } else {
-        // On desktop, use the traditional Google Maps URL with the Place ID.
-        setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${eatery.id}`);
-      }
+      // For iOS, try the comgooglemaps:// URL scheme.
+        if (isIOS() && lat && lng) {
+          // Try Google Maps first.
+          const googleUrl = `comgooglemaps://?q=${encodeURIComponent(eatery.name)}&center=${lat},${lng}`;
+          // Optionally, you could check if this URL works or simply provide an alternate link.
+          setMapsUrl(googleUrl);
+        } else if (isMobile && lat && lng) {
+          setMapsUrl(`geo:${lat},${lng}?q=${encodeURIComponent(eatery.name)}`);
+        } else {
+          setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${eatery.id}`);
+        }
     }
   }, [eatery]);
 
@@ -170,7 +180,7 @@ const EateryCard: React.FC<EateryCardProps> = ({ eatery, bgIndex = 1, headerTitl
             </p>
             {eatery.summary && bestFoodsArray.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {bestFoodsArray.slice(0, 3).map((food: string, index: number) => (
+                {bestFoodsArray.slice(0, 2).map((food: string, index: number) => (
                   <span
                     key={index}
                     className="inline-block self-start w-auto bg-yellow-700 rounded-full px-2 py-0.5"
