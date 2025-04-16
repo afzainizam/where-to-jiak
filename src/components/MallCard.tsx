@@ -3,8 +3,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FaMapMarkerAlt } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { FaMapMarkerAlt, FaSpinner } from "react-icons/fa";
 import EateryCard from "@/components/EateryCard";
+import { fetchAllCarparksV2, CarparkRecord } from "@/services/carparkAvailability";
 
 interface MallCardProps {
   mall: any; // Ideally, use your defined type for malls
@@ -31,6 +33,10 @@ const isIOS = (): boolean => {
 };
 
 export default function MallCard({ mall, expandedEatery, highlightEatery, title }: MallCardProps) {
+  const router = useRouter();
+  // State for showing the "loading" cue when navigating to the mall detail page.
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   // Determine the featured eatery based on highest rating.
   const featuredEatery = mall.eateries?.reduce(
     (prev: any, curr: any) => (curr.rating > prev.rating ? curr : prev),
@@ -48,28 +54,46 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
   // Generate the embed URL for the map iframe.
   const embedUrl = mall.google_maps_url
     ? getEmbedUrl(mall.google_maps_url)
-    : (mall.eateries && mall.eateries[0]?.location?.lat && mall.eateries[0]?.location?.lng)
-      ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0].location.lat},${mall.eateries[0].location.lng}`
-      : "";
+    : (mall.eateries &&
+        mall.eateries[0]?.location?.lat &&
+        mall.eateries[0]?.location?.lng)
+    ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&q=${mall.eateries[0].location.lat},${mall.eateries[0].location.lng}`
+    : "";
 
-  // State for the maps URL that will be used for the "View on Google Maps" link.
+  // --- Carpark Availability Integration ---
+  // State for carpark records that match this mall.
+  const [matchingCarparks, setMatchingCarparks] = useState<CarparkRecord[]>([]);
+  useEffect(() => {
+    async function getCarparkData() {
+      try {
+        const records = await fetchAllCarparksV2();
+        console.log("New Carpark API response:", records);
+        const matches = records.filter((record: CarparkRecord) =>
+          record.Development.toLowerCase().includes(mall.name.toLowerCase())
+        );
+        setMatchingCarparks(matches);
+      } catch (error) {
+        console.error("Error fetching new carpark availability:", error);
+      }
+    }
+    if (mall && mall.name) {
+      getCarparkData();
+    }
+  }, [mall]);
+
+  // State for the maps URL for "View on Google Maps" link.
   const [mapsUrl, setMapsUrl] = useState<string>("");
-
   useEffect(() => {
     if (typeof window !== "undefined" && mall.id) {
       const isMobile = window.innerWidth < 768;
-      // For mobile devices try using coordinates if available.
       const { lat, lng } = mall.coordinates || {};
       if (isMobile && lat && lng) {
         if (isIOS()) {
-          // Use the comgooglemaps:// scheme for iOS
           setMapsUrl(`comgooglemaps://?q=${encodeURIComponent(mall.name)}&center=${lat},${lng}`);
         } else {
-          // For Android mobile, use the geo: URI scheme.
           setMapsUrl(`geo:${lat},${lng}?q=${encodeURIComponent(mall.name)}`);
         }
       } else {
-        // On desktop or if coordinates are missing, fall back to the standard URL using the Place ID.
         setMapsUrl(`https://www.google.com/maps/place/?q=place_id:${mall.id}`);
       }
     }
@@ -120,13 +144,35 @@ export default function MallCard({ mall, expandedEatery, highlightEatery, title 
               )}
             </div>
             <div>
-              <Link href={`/mall/${mall.id}`}>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                  View More Eateries
-                </button>
-              </Link>
+              <button
+                onClick={() => {
+                  setIsLoadingMore(true);
+                  router.push(`/mall/${mall.id}`);
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2"
+              >
+                {isLoadingMore ? (
+                  <>
+                    Loading...
+                    <FaSpinner className="animate-spin" />
+                  </>
+                ) : (
+                  "View More Eateries"
+                )}
+              </button>
             </div>
           </div>
+
+          {/* Display Carpark Availability (if available) */}
+          {matchingCarparks.length > 0 && (
+            <div className="mt-2 text-sm text-gray-300">
+              {matchingCarparks.map((cp, index) => (
+                <div key={index}>
+                  {cp.Development}: {cp.AvailableLots} lots available
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Featured Eatery Section */}
           {featuredEatery && (
