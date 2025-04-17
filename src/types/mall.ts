@@ -30,6 +30,8 @@ export interface Eatery {
   logo_url?: string;
   rating?: number;
   total_reviews?: number;
+  hidden_gem?: boolean;
+  hidden_gem_blog?: string;
   location?: Location;  // This location is required for eateries
   summary?: {
     one_liner: string;

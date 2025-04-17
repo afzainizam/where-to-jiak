@@ -84,14 +84,19 @@ export default function VideoOverlay({
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 z-20"
+          className="
+              absolute top-2 right-2 z-20
+              bg-white rounded-full p-2
+              shadow-md
+              text-gray-600 hover:text-gray-900
+            "
         >
-          <FaTimes size={24} />
+          <FaTimes size={20} />
         </button>
 
         {/* Video container with dynamic aspect-ratio */}
         <div
-          className="w-full rounded-t-lg overflow-hidden bg-black flex items-center justify-center"
+          className="w-full rounded-t-lg bg-black flex items-center justify-center"
           style={{
             // While loading, show a 16/9 placeholder
             aspectRatio: loadingRatio ? "16/9" : aspectRatio,
@@ -101,7 +106,7 @@ export default function VideoOverlay({
             <div className="text-white animate-pulse">Loading video…</div>
           ) : (
             <iframe
-              className="w-full h-full"
+               className={`h-full ${aspectRatio === "9/16" ? "w-auto mx-auto" : "w-full"}`}
               src={urls[index].replace("watch?v=", "embed/")}
               frameBorder="0"
               allow="autoplay; encrypted-media"

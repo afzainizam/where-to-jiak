@@ -1,9 +1,9 @@
 // EateryCard.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";    // ← added useRef
 import { GiKnifeFork } from "react-icons/gi";
-import { FaGlobe, FaYoutube } from "react-icons/fa";
+import { FaGlobe, FaYoutube, FaChevronDown } from "react-icons/fa"; // ← FaChevronDown for arrow
 import type { Eatery } from "@/types/mall";
 import TruncatedName from "@/components/TruncatedName";
 import VideoOverlay from "@/components/VideoOverlay";
@@ -50,22 +50,26 @@ const EateryCard: React.FC<EateryCardProps> = ({
   const [showVideo, setShowVideo] = useState(false);
   const [videoIndex, setVideoIndex] = useState(0);
 
-  // ─── Process "Best foods" ────────────────────────────────────────
-  const bestFoodsData =
-    eatery.summary && (
-      (eatery.summary as any)["Best foods"] ??
-      (eatery.summary as any)["Best_foods"]
-    ) || null;
-  const bestFoodsArray: string[] = bestFoodsData
-    ? Array.isArray(bestFoodsData)
-      ? bestFoodsData.map((food: string) => food.trim()).filter((f) => f)
-      : typeof bestFoodsData === "string"
-      ? bestFoodsData
-          .split(",")
-          .map((food: string) => food.trim())
-          .filter((f) => f)
-      : []
-    : [];
+    // Best‑foods pop‑over
+      const [showFoods, setShowFoods] = useState(false);
+      const foodsRef = useRef<HTMLDivElement>(null);
+      useEffect(() => {
+        function onClickOutside(e: MouseEvent) {
+          if (foodsRef.current && !foodsRef.current.contains(e.target as Node)) {
+            setShowFoods(false);
+          }
+        }
+        document.addEventListener("mousedown", onClickOutside);
+        return () => document.removeEventListener("mousedown", onClickOutside);
+      }, []);
+
+    // Prepare bestFoodsArray
+      const raw = (eatery.summary as any)?.["Best foods"] ?? (eatery.summary as any)?.Best_foods;
+      const bestFoodsArray: string[] = Array.isArray(raw)
+        ? raw
+        : typeof raw === "string"
+        ? raw.split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
 
   // ─── Maps URL State ───────────────────────────────────────────────
   const [mapsUrl, setMapsUrl] = useState<string>("");
@@ -176,10 +180,18 @@ const EateryCard: React.FC<EateryCardProps> = ({
           </div>
 
           {/* Text Overlay */}
-          <div className="absolute inset-0 z-20 flex flex-col justify-end p-4 text-white text-sm gap-1">
-            <h2 className="text-base font-bold">
-              <TruncatedName fullName={eatery.name} maxLength={25} />
-            </h2>
+          <div className="absolute inset-0 z-20 flex flex-col justify-end pt-6 pb-4 px-3 text-white text-sm gap-1">
+                <div>
+                    <h2 className="text-base font-bold truncate">
+                    {eatery.name}
+                    </h2>
+                    {eatery.hidden_gem && (
+                    <span className="inline-block bg-purple-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full mt-1">
+                        Hidden Gem
+                    </span>
+                    )}
+                    </div>
+                                 
             <a
               href={mapsUrl}
               target="_blank"
@@ -202,20 +214,34 @@ const EateryCard: React.FC<EateryCardProps> = ({
                 </span>
               )}
             </p>
-            {bestFoodsArray.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {bestFoodsArray.slice(0, 2).map((food, i) => (
-                  <span
-                    key={i}
-                    className="bg-yellow-700 rounded-full px-2 py-0.5 text-sm"
-                  >
-                    👍 {food}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+          {/* Best Foods Pop‑over */}
+                      {bestFoodsArray.length > 0 && (
+                        <div className="relative mt-2" ref={foodsRef}>
+                          <span className="bg-yellow-700 rounded-full px-2 py-0.5 text-sm inline-block">
+                            👍 {bestFoodsArray[0]}
+                          </span>
+                          {bestFoodsArray.length > 1 && (
+                            <button
+                              onClick={() => setShowFoods((v) => !v)}
+                              className="ml-2 inline-flex items-center justify-center w-6 h-6 bg-yellow-700 rounded-full text-white text-xs"
+                            >
+                              <FaChevronDown className="w-3 h-3" />
+                            </button>
+                          )}
+                          {showFoods && (
+                            <div className="absolute top-full left-0 mt-1 w-40 bg-yellow-700 text-white text-xs rounded shadow-lg p-2 z-50">
+                              <ul className="list-disc pl-4 space-y-1">
+                                {bestFoodsArray.map((food, i) => (
+                                  <li key={i}>{food}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {/* End Best Foods */}
+                    </div>
+                  </div>
 
         {/* Hours */}
         {eatery.hours && eatery.hours.length > 0 && (

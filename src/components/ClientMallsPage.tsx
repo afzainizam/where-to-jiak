@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import MallCard from "@/components/MallCard";
 import SearchBar from "@/components/SearchBar";
@@ -24,6 +24,35 @@ const ClientMallsPage = ({ malls }: Props) => {
   const [selectedMall, setSelectedMall] = useState<Mall | null>(null);
   const [selectedEatery, setSelectedEatery] = useState<Eatery | null>(null);
 
+  // 1) Gather all hidden‑gem eateries
+  const hiddenGems = useMemo(
+    () => malls.flatMap(m => m.eateries.filter(e => e.hidden_gem)),
+    [malls]
+    );
+    
+    // 2) Pick one at random on mount
+     const [featuredGem, setFeaturedGem] = useState<Eatery|null>(null);
+     useEffect(() => {
+       if (hiddenGems.length > 0) {
+         const idx = Math.floor(Math.random() * hiddenGems.length);
+         setFeaturedGem(hiddenGems[idx]);
+       }
+     }, [hiddenGems]);
+
+     // 3) Panel toggle
+     const [showGemPanel, setShowGemPanel] = useState(false);
+     const panelRef = useRef<HTMLDivElement>(null);
+     // close if click outside
+     useEffect(() => {
+       function onClickOutside(e: MouseEvent) {
+         if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+           setShowGemPanel(false);
+         }
+       }
+       document.addEventListener("mousedown", onClickOutside);
+       return () => document.removeEventListener("mousedown", onClickOutside);
+     }, []);
+    
   const regions = ["Nearby", "North", "North-East", "East", "West", "Central"];
   const taglines = [
     "Feeling hungry? So is your stomach.",
@@ -150,7 +179,10 @@ const ClientMallsPage = ({ malls }: Props) => {
   return (
     <div>
       {/* Hero with search */}
-      <header className="hero bg-[url('/images/landing-bg.jpg')] bg-cover bg-center h-[50vh] flex flex-col items-center justify-center text-white px-4 text-center bg-[rgba(0,0,0,0.8)] z-10">
+          <header
+                  className="relative hero bg-[url('/images/landing-bg.jpg')] bg-cover bg-center h-[50vh] flex flex-col items-center justify-center text-white px-4 text-center"
+                  style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+                >
         <h1 className="text-4xl font-bold mb-2">Where to Jiak?</h1>
         <p className="mb-4 text-lg max-w-xl">
           Discover top eateries in MALLS across Singapore!
@@ -162,6 +194,45 @@ const ClientMallsPage = ({ malls }: Props) => {
             onSelect={handleSelectSuggestion}
           />
         </div>
+          
+          {/* 4) Floating Hidden Gem button */}
+                  {featuredGem && (
+                    <button
+                      onClick={() => setShowGemPanel(v => !v)}
+                      className="absolute bottom-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full shadow-lg"
+                    >
+                      Hidden Gem of the Day
+                    </button>
+                  )}
+
+                  {/* 5) Panel */}
+                  {showGemPanel && featuredGem && (
+                    <div
+                      ref={panelRef}
+                      className="absolute bottom-16 w-80 bg-white text-black rounded-lg shadow-xl p-4"
+                    >
+                      <h3 className="text-lg font-bold mb-2">
+                        {featuredGem.name}
+                      </h3>
+                      <p className="text-sm mb-4">
+                        {featuredGem.hidden_gem_blog}
+                      </p>
+                      <div className="text-right">
+                        <button
+                          onClick={() => {
+                            // switch to that eatery
+                            setSelectedEatery(featuredGem);
+                            setSelectedMall(null);
+                            setShowGemPanel(false);
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                        >
+                          Learn more
+                        </button>
+                      </div>
+                    </div>
+                  )}
+          
       </header>
 
       {/* Tagline */}
