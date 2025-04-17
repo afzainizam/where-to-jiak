@@ -26,6 +26,7 @@ export interface Eatery {
   hours?: string[];
   phone?: string;
   website?: string;
+  "youtube url"?: string[];
   logo_url?: string;
   rating?: number;
   total_reviews?: number;

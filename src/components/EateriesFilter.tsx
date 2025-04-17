@@ -255,16 +255,16 @@ const EateriesFilter = () => {
         </div>
       )}
 
-      {/* Display Carpark Availability */}
-      {matchingCarparks.length > 0 && (
-        <div className="mt-2 text-sm text-gray-300">
-          {matchingCarparks.map((cp, index) => (
-            <div key={index}>
-              {cp.Development}: {cp.AvailableLots} lots available
+          {/* {matchingCarparks.length > 0 && (
+            <div className="mt-2 text-sm text-gray-300">
+              {matchingCarparks.map((cp, index) => (
+                <div key={index}>
+                  {cp.Development}: {cp.AvailableLots} lots available
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )} */}
+
 
       {/* Eateries Grid */}
       <div className="grid md:grid-cols-3 gap-0">
