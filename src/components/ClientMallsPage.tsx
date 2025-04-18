@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,                // ← import useRef
+  MutableRefObject,
+} from "react";
 import { useRouter } from "next/navigation";
 import MallCard from "@/components/MallCard";
 import SearchBar from "@/components/SearchBar";
 import MallSquaresRow from "@/components/MallSquaresRow";
-import EateryDetail from "@/components/EateryDetail";
 import type { Mall, Eatery } from "@/types/mall";
 import type { Suggestion } from "@/components/SearchBar";
 import EateryCard from "@/components/EateryCard";
@@ -20,38 +25,40 @@ const ClientMallsPage = ({ malls }: Props) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredMalls, setFilteredMalls] = useState<Mall[]>([]);
   const [randomTagline, setRandomTagline] = useState("");
-  // Only declare selectedMall and selectedEatery *inside* the component:
   const [selectedMall, setSelectedMall] = useState<Mall | null>(null);
   const [selectedEatery, setSelectedEatery] = useState<Eatery | null>(null);
 
   // 1) Gather all hidden‑gem eateries
   const hiddenGems = useMemo(
-    () => malls.flatMap(m => m.eateries.filter(e => e.hidden_gem)),
+    () => malls.flatMap((m) => m.eateries.filter((e) => e.hidden_gem)),
     [malls]
-    );
-    
-    // 2) Pick one at random on mount
-     const [featuredGem, setFeaturedGem] = useState<Eatery|null>(null);
-     useEffect(() => {
-       if (hiddenGems.length > 0) {
-         const idx = Math.floor(Math.random() * hiddenGems.length);
-         setFeaturedGem(hiddenGems[idx]);
-       }
-     }, [hiddenGems]);
+  );
 
-     // 3) Panel toggle
-     const [showGemPanel, setShowGemPanel] = useState(false);
-     const panelRef = useRef<HTMLDivElement>(null);
-     // close if click outside
-     useEffect(() => {
-       function onClickOutside(e: MouseEvent) {
-         if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-           setShowGemPanel(false);
-         }
-       }
-       document.addEventListener("mousedown", onClickOutside);
-       return () => document.removeEventListener("mousedown", onClickOutside);
-     }, []);
+  // 2) Pick one at random on mount
+  const [featuredGem, setFeaturedGem] = useState<Eatery | null>(null);
+  useEffect(() => {
+    if (hiddenGems.length > 0) {
+      setFeaturedGem(hiddenGems[Math.floor(Math.random() * hiddenGems.length)]);
+    }
+  }, [hiddenGems]);
+
+  // 3) Tab & panel state
+  const [showGemPanel, setShowGemPanel] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Close panel when clicking outside
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node)
+      ) {
+        setShowGemPanel(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
     
   const regions = ["Nearby", "North", "North-East", "East", "West", "Central"];
   const taglines = [
@@ -176,64 +183,106 @@ const ClientMallsPage = ({ malls }: Props) => {
       ? `Recommended Jiak spot in the ${region}`
       : "Jiak Spot of the Day";
 
-  return (
-    <div>
-      {/* Hero with search */}
+    return (
+        <div>
+          {/* ─── Hero ─────────────────────────────────────────────────────────── */}
           <header
-                  className="relative hero bg-[url('/images/landing-bg.jpg')] bg-cover bg-center h-[50vh] flex flex-col items-center justify-center text-white px-4 text-center"
-                  style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
-                >
-        <h1 className="text-4xl font-bold mb-2">Where to Jiak?</h1>
-        <p className="mb-4 text-lg max-w-xl">
-          Discover top eateries in MALLS across Singapore!
-        </p>
-        <div className="max-w-md w-full">
-          <SearchBar
-            malls={malls}
-            onSearch={handleSearch}
-            onSelect={handleSelectSuggestion}
-          />
-        </div>
-          
-          {/* 4) Floating Hidden Gem button */}
-                  {featuredGem && (
-                    <button
-                      onClick={() => setShowGemPanel(v => !v)}
-                      className="absolute bottom-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full shadow-lg"
-                    >
-                      Hidden Gem of the Day
-                    </button>
-                  )}
+            className="relative hero bg-[url('/images/landing-bg.jpg')] bg-cover bg-center h-[50vh] flex flex-col items-center justify-center text-white px-4 text-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+          >
+            <h1 className="text-4xl font-bold mb-2">Where to Jiak?</h1>
+            <p className="mb-4 text-lg max-w-xl">
+              Discover top eateries in MALLS across Singapore!
+            </p>
+            <div className="max-w-md w-full">
+              <SearchBar
+                malls={malls}
+                onSearch={(term) => {
+                  setSearchTerm(term);
+                  setSelectedMall(null);
+                  setSelectedEatery(null);
+                }}
+                onSelect={(item: Suggestion) => {
+                  if (item.type === "mall") {
+                    setSelectedMall(malls.find((m) => m.id === item.id) ?? null);
+                    setSelectedEatery(null);
+                  } else {
+                    let found: Eatery | undefined;
+                    malls.forEach((m) => {
+                      const e = m.eateries.find((e) => e.id === item.id);
+                      if (e) found = e;
+                    });
+                    setSelectedEatery(found ?? null);
+                    setSelectedMall(null);
+                  }
+                }}
+              />
+            </div>
 
-                  {/* 5) Panel */}
-                  {showGemPanel && featuredGem && (
-                    <div
-                      ref={panelRef}
-                      className="absolute bottom-16 w-80 bg-white text-black rounded-lg shadow-xl p-4"
-                    >
-                      <h3 className="text-lg font-bold mb-2">
-                        {featuredGem.name}
-                      </h3>
-                      <p className="text-sm mb-4">
-                        {featuredGem.hidden_gem_blog}
-                      </p>
-                      <div className="text-right">
-                        <button
-                          onClick={() => {
-                            // switch to that eatery
-                            setSelectedEatery(featuredGem);
-                            setSelectedMall(null);
-                            setShowGemPanel(false);
-                          }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                        >
-                          Learn more
-                        </button>
-                      </div>
+            {/* ─── Tab & Panel ────────────────────────────────────────────── */}
+            {featuredGem && (
+              <div
+                ref={panelRef}
+                className="absolute left-2 bottom-0 w-50">
+                {/* —1— Tab, always visible and sits above the clip‑wrapper */}
+                <button
+                  onClick={() => setShowGemPanel(v => !v)}
+                  className={`
+                    z-20 relative
+                    bg-purple-600 hover:bg-purple-700
+                    text-white text-sm font-medium
+                    px-4 py-2 rounded-t-lg shadow-lg
+                    w-full
+                    transition-transform duration-300
+                    ${showGemPanel ? "-translate-y-0" : "translate-y-0"}
+                  `}
+                >
+                  Hidden Gem of the Day
+                </button>
+
+                {/* —2— Clip‑wrapper: hides everything below the tab when closed */}
+                <div
+                  className={`
+                    overflow-hidden
+                    transition-[max-height] duration-300 ease-in-out
+                    ${showGemPanel ? "max-h-[20rem]" : "max-h-0"}
+                  `}
+                  style={{  /* adjust max-h to the height you need */
+                    transitionProperty: "max-height",
+                  }}
+                >
+                  {/* —3— Panel body slides in under the tab */}
+                  <div
+                    className={`
+                      bg-white text-gray-800 rounded-b-lg shadow-xl p-4
+                      transform transition-transform duration-300
+                      ${showGemPanel ? "translate-y-0" : "-translate-y-full"}
+                    `}
+                  >
+                    <h3 className="text-sm font-semibold mb-1">
+                      {featuredGem.name}
+                    </h3>
+                    <p className="text-left !text-xs leading-relaxed mb-3 max-h-36 overflow-y-auto">
+                      {featuredGem.hidden_gem_blog}
+                    </p>
+                    <div className="text-right">
+                      <button
+                        onClick={() => {
+                          setSelectedEatery(featuredGem);
+                          setSelectedMall(null);
+                          setShowGemPanel(false);
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded"
+                      >
+                        Learn more
+                      </button>
                     </div>
-                  )}
-          
-      </header>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </header>
 
       {/* Tagline */}
       <div className="text-center text-lg italic text-white my-4 px-4">
