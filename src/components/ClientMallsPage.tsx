@@ -27,6 +27,18 @@ const ClientMallsPage = ({ malls }: Props) => {
   const [randomTagline, setRandomTagline] = useState("");
   const [selectedMall, setSelectedMall] = useState<Mall | null>(null);
   const [selectedEatery, setSelectedEatery] = useState<Eatery | null>(null);
+    
+  const regions = ["Nearby", "North", "North-East", "East", "West", "Central"];
+  const taglines = [
+      "Feeling hungry? So is your stomach.",
+      "Discover hidden gems near you!",
+      "One mall to jiak them all.",
+      "Your next meal is a click away.",
+      "Warning: browsing may cause cravings.",
+      "Hawker, hotpot, or halal? We got you.",
+      "Hungry but indecisive? Scroll on.",
+      "Jiak where? Jiak here lah!",
+    ];
 
   // 1) Gather all hidden‑gem eateries
   const hiddenGems = useMemo(
@@ -59,18 +71,6 @@ const ClientMallsPage = ({ malls }: Props) => {
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
-    
-  const regions = ["Nearby", "North", "North-East", "East", "West", "Central"];
-  const taglines = [
-    "Feeling hungry? So is your stomach.",
-    "Discover hidden gems near you!",
-    "One mall to jiak them all.",
-    "Your next meal is a click away.",
-    "Warning: browsing may cause cravings.",
-    "Hawker, hotpot, or halal? We got you.",
-    "Hungry but indecisive? Scroll on.",
-    "Jiak where? Jiak here lah!",
-  ];
 
   useEffect(() => {
     const index = Math.floor(Math.random() * taglines.length);
@@ -230,8 +230,8 @@ const ClientMallsPage = ({ malls }: Props) => {
                   className={`
                     z-20 relative
                     bg-purple-600 hover:bg-purple-700
-                    text-white text-sm font-medium
-                    px-4 py-2 rounded-t-lg shadow-lg
+                    text-white text-xs font-medium
+                    px-4 py-1 rounded-t-lg shadow-lg
                     w-full
                     transition-transform duration-300
                     ${showGemPanel ? "-translate-y-0" : "translate-y-0"}
